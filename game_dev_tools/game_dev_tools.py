@@ -1,5 +1,6 @@
 from game_dev_tools import *
 import math
+import pygame
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -36,28 +37,64 @@ def get_collision_point_of_circles(circles: list):
 # Retourne le point opposé au point de collision entre 2 cercles (point_collision + pi)
 def get_collision_opposite_point_of_circles(circles: list):
 
-        if not isinstance(circles, list):
-            raise TypeError("L'argument doit être une liste")
-        if len(circles) < 2 or len(circles) > 2:
-            raise ValueError("La liste doit contenir 2 élements")
+    if not isinstance(circles, list):
+        raise TypeError("L'argument doit être une liste")
+    if len(circles) < 2 or len(circles) > 2:
+        raise ValueError("La liste doit contenir 2 élements")
 
-        angle3 = get_collision_point_angle(circles)
-        angle4 = angle3 + math.pi
+    angle3 = get_collision_point_angle(circles)
+    angle4 = angle3 + math.pi
 
-        collision_opposite_point_x = circles[0].position[0] + circles[0].radius * math.cos(angle3)
-        collision_opposite_point_y = circles[0].position[1] + circles[0].radius * math.sin(angle3)
+    collision_opposite_point_x = circles[0].position[0] + circles[0].radius * math.cos(angle3)
+    collision_opposite_point_y = circles[0].position[1] + circles[0].radius * math.sin(angle3)
 
-        collision_opposite_point = (collision_opposite_point_x,collision_opposite_point_y)
+    collision_opposite_point = (collision_opposite_point_x,collision_opposite_point_y)
 
-        return collision_opposite_point
+    return collision_opposite_point
 
 # Retourne l'angle d'un point de collision
 def get_collision_point_angle(circles: list):
 
-    collision_opposite_point_angle = math.atan2(circles[0].position[1] - circles[1].position[1],
-               circles[0].position[0] - circles[1].position[0])
+    collision_opposite_point_angle = math.atan2(circles[0].position[1] - circles[1].position[1], circles[0].position[0] - circles[1].position[0])
 
     return collision_opposite_point_angle
+
+def draw_circles_collision(surface: pygame.Surface,circles: list):
+    circle1 = circles[0]
+    circle2 = circles[1]
+    surface_width = surface.get_width()
+    surface_height = surface.get_height()
+
+    #circle1.color = ""
+    #circle2.color = ""
+
+    # récupérer point de collision entre 2 cercles
+    collision_point = get_collision_point_of_circles(circles)
+    collision_point_x = collision_point[0]
+    collision_point_y = collision_point[1]
+
+    # trouver le point opposé au point de collision
+    collision_opposite_point = get_collision_opposite_point_of_circles(circles)
+    collision_opposite_point_x = collision_opposite_point[0]
+    collision_opposite_point_y = collision_opposite_point[1]
+
+    # Dessiner un cercle plein autour du point de collision
+    pygame.draw.circle(surface, pygame.color.Color("white"), (collision_point_x, collision_point_y), 5)
+
+    # Dessiner un cercle plein autour du point opposé au point de collision
+    pygame.draw.circle(surface, pygame.color.Color("white"), (collision_opposite_point[0], collision_opposite_point[1]), 5)
+
+    #lignes horizontal et vertical passant par le point de collision
+    pygame.draw.line(surface, pygame.color.Color("white"), (collision_point_x, 0),
+                     (collision_point_x,), 1)
+    pygame.draw.line(surface, pygame.color.Color("white"), (0, collision_point_y), (surface_width, collision_point_y),
+                     1)
+
+    # lignes du point opposé
+    pygame.draw.line(surface, pygame.color.Color("white"), (collision_opposite_point_x, 0),
+                     (collision_opposite_point_x, surface_height), 1)
+    pygame.draw.line(surface, pygame.color.Color("white"), (0, collision_opposite_point_y), (surface_width, collision_opposite_point_y),
+                     1)
 
 def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surface_height):
 
