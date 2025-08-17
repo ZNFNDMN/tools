@@ -1,4 +1,3 @@
-from game_dev_tools import *
 import math
 import pygame
 
