@@ -1,5 +1,5 @@
-from game_dev_tools import *
 import math
+import pygame
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -29,9 +29,7 @@ def get_collision_point_of_circles(circles: list):
     collision_point_x = circles[0].position[0] + circles[0].radius * math.cos(angle1)
     collision_point_y = circles[0].position[1] + circles[0].radius * math.sin(angle1)
 
-    collision_point = (collision_point_x,collision_point_y)
-
-    return collision_point
+    return pygame.Vector2(collision_point_x,collision_point_y)
 
 # Retourne le point opposé au point de collision entre 2 cercles (point_collision + pi)
 def get_collision_opposite_point_of_circles(circles: list):
