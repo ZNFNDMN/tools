@@ -52,10 +52,10 @@ def get_collision_opposite_point_of_circles(circles: list):
 # Retourne l'angle d'un point de collision
 def get_collision_point_angle(circles: list):
 
-    collision_opposite_point_angle = math.atan2(circles[0].position[1] - circles[1].position[1],
+    collision_point_angle = math.atan2(circles[0].position[1] - circles[1].position[1],
                circles[0].position[0] - circles[1].position[0])
 
-    return collision_opposite_point_angle
+    return collision_point_angle
 
 def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surface_height):
 
@@ -70,3 +70,82 @@ def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surf
             circle_y = circle_radius
         if circle_y + circle_radius > surface_height:
             circle_y = surface_height - circle_radius
+
+def draw_rect(surface:pygame.Surface, divisions):
+    #exemple 2x2, 4x4 ou 8x8
+
+    denominator = divisions
+
+    surf_width = surface.get_width()
+    surf_height = surface.get_height()
+
+    rect_width = surf_width * 1 / denominator
+    rect_height = surf_height * 1 / denominator
+
+    # draw the rects
+    blue_variations = []
+    for color_name in pygame.color.THECOLORS:
+        if 'blue' in color_name.lower():
+            blue_variations.append((color_name, pygame.color.THECOLORS[color_name]))
+
+    color_index = 0
+
+    for numerator1 in range(0, denominator+1):
+        color_index += 1
+        for numerator2 in range(0, denominator+1):
+            color_index += 1
+            pygame.draw.rect(surface, blue_variations[-color_index][1], (surf_width * numerator2/denominator, surf_height * numerator1/denominator, rect_width, rect_height))
+            if color_index == len(blue_variations)-1:
+                color_index = 0
+
+def draw_dots(surface: pygame.Surface, divisions):
+    # 2x2, 4x4 ou 8x8
+    denominator = divisions
+    color = (255,255,255)
+    radius = 2
+
+    surf_width = surface.get_width()
+    surf_height = surface.get_height()
+
+    # dessiner les points
+    for numerator1 in range(0, denominator + 1):
+        for numerator2 in range(0, denominator + 1):
+            pygame.draw.aacircle(surface,
+                                 color,
+                                 (surf_width * numerator2 / denominator, surf_height * numerator1 / denominator),
+                                 radius)
+
+def draw_grid(surface: pygame.Surface, divisions):
+    # 2x2, 4x4 ou 8x8
+    surf_rect = surface.get_rect()
+    denominator = divisions
+    line_color = (255,255,255)
+
+    surf_width = surface.get_width()
+    surf_height = surface.get_height()
+
+    for numerator in range(0, denominator + 1):
+        # lignes horizontales
+        pygame.draw.aaline(
+            surface,
+            line_color,
+            (0, surf_height * numerator / denominator),
+            (surf_width, surf_height * numerator / denominator), 1)
+
+        # lignes verticales
+        pygame.draw.aaline(surface,
+                           line_color,
+                           (surf_width * numerator / denominator, 0),
+                           (surf_width * numerator / denominator, surf_height))
+
+#Fonctions pour float
+
+# Remplace la fonction range n'autorise pas le type float
+def float_range(start, stop, step):
+    """Génère une séquence avec des steps décimaux"""
+    result = []
+    current = start
+    while current < stop:
+        result.append(current)
+        current += step
+    return result
