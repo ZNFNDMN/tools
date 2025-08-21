@@ -98,11 +98,11 @@ def draw_rect(surface:pygame.Surface, divisions):
             if color_index == len(blue_variations)-1:
                 color_index = 0
 
-def draw_dots(surface: pygame.Surface, divisions):
+def draw_dots(surface: pygame.Surface, divisions, color, radius):
     # 2x2, 4x4 ou 8x8
     denominator = divisions
-    color = (255,255,255)
-    radius = 2
+    dot_color = color
+    dot_radius = radius
 
     surf_width = surface.get_width()
     surf_height = surface.get_height()
@@ -115,11 +115,29 @@ def draw_dots(surface: pygame.Surface, divisions):
                                  (surf_width * numerator2 / denominator, surf_height * numerator1 / denominator),
                                  radius)
 
-def draw_grid(surface: pygame.Surface, divisions):
+def draw_coordinate_fraction(surface:pygame.Surface, divisions, font_size, font_color):
+
+    denominator = divisions
+    surf_width = surface.get_width()
+    surf_height = surface.get_height()
+    font = pygame.font.Font(None, font_size)
+
+    for numerator1 in range(0, denominator + 1):
+        for numerator2 in range(0, denominator + 1):
+
+            text = f"({numerator2}/{denominator},{numerator1}/{denominator})"
+            coordinates_text = font.render(text,True,font_color)
+            x = surf_width * numerator2 / denominator
+            y = surf_height * numerator1 / denominator
+            pos_offset = 5
+            surface.blit(coordinates_text,(x+pos_offset,y+pos_offset))
+
+
+def draw_grid(surface: pygame.Surface, divisions, color):
     # 2x2, 4x4 ou 8x8
     surf_rect = surface.get_rect()
     denominator = divisions
-    line_color = (255,255,255)
+    line_color = color
 
     surf_width = surface.get_width()
     surf_height = surface.get_height()
