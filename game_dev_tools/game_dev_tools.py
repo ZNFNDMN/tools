@@ -132,7 +132,6 @@ def draw_coordinate_fraction(surface:pygame.Surface, divisions, font_size, font_
             pos_offset = 5
             surface.blit(coordinates_text,(x+pos_offset,y+pos_offset))
 
-
 def draw_grid(surface: pygame.Surface, divisions, color):
     # 2x2, 4x4 ou 8x8
     surf_rect = surface.get_rect()
@@ -144,14 +143,14 @@ def draw_grid(surface: pygame.Surface, divisions, color):
 
     for numerator in range(0, denominator + 1):
         # lignes horizontales
-        pygame.draw.aaline(
+        pygame.draw.line(
             surface,
             line_color,
             (0, surf_height * numerator / denominator),
-            (surf_width, surf_height * numerator / denominator), 1)
+            (surf_width, surf_height * numerator / denominator))
 
         # lignes verticales
-        pygame.draw.aaline(surface,
+        pygame.draw.line(surface,
                            line_color,
                            (surf_width * numerator / denominator, 0),
                            (surf_width * numerator / denominator, surf_height))
