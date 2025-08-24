@@ -71,13 +71,15 @@ def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surf
         if circle_y + circle_radius > surface_height:
             circle_y = surface_height - circle_radius
 
-def draw_rect(surface:pygame.Surface, divisions):
+def draw_rect(window:pygame.Surface,surf:pygame.Surface, divisions):
     #exemple 2x2, 4x4 ou 8x8
+
+    surfaces = []
 
     denominator = divisions
 
-    surf_width = surface.get_width()
-    surf_height = surface.get_height()
+    surf_width = surf.get_width()
+    surf_height = surf.get_height()
 
     rect_width = surf_width * 1 / denominator
     rect_height = surf_height * 1 / denominator
@@ -90,13 +92,21 @@ def draw_rect(surface:pygame.Surface, divisions):
 
     color_index = 0
 
-    for numerator1 in range(0, denominator+1):
+    for numerator1 in range(0, denominator):
         color_index += 1
-        for numerator2 in range(0, denominator+1):
+        for numerator2 in range(0, denominator):
             color_index += 1
-            pygame.draw.rect(surface, blue_variations[-color_index][1], (surf_width * numerator2/denominator, surf_height * numerator1/denominator, rect_width, rect_height))
+            #rects.append(pygame.draw.rect(surface, blue_variations[color_index][1], (surf_width * numerator2/denominator, surf_height * numerator1/denominator, rect_width, rect_height)))
+            surface = pygame.surface.Surface((rect_width, rect_height))
+            #surface.fill(blue_variations[-color_index][1])
+            #surf.blit(surface, (surf_width * numerator2 / denominator, surf_height * numerator1 / denominator))
+            #print(f"x : {surf_width * numerator2 / denominator}, y : {surf_height * numerator1 / denominator}")
+            surfaces.append(surface)
             if color_index == len(blue_variations)-1:
                 color_index = 0
+
+    #print("------------------------------------------------")
+    return surfaces
 
 def draw_dots(surface: pygame.Surface, divisions, color, radius):
     # 2x2, 4x4 ou 8x8
@@ -154,6 +164,45 @@ def draw_grid(surface: pygame.Surface, divisions, color):
                            line_color,
                            (surf_width * numerator / denominator, 0),
                            (surf_width * numerator / denominator, surf_height))
+
+def create_surface(window:pygame.Surface,marge_width):
+    window_width = window.get_width()
+    window_height = window.get_height()
+
+    surface = pygame.surface.Surface((window_width - marge_width*2 , window_height - marge_width*2))
+    return surface
+
+def show_surface(window:pygame.Surface,surface:pygame.Surface,marge_width):
+    window.blit(surface, (marge_width,marge_width))
+
+def show_coordinate(window:pygame.Surface, surface:pygame.Surface, font:pygame.font.Font, color:pygame.color.Color,surf_marge_width):
+    offset_vector = pygame.Vector2(surf_marge_width, surf_marge_width)
+    offset = surf_marge_width
+
+    surf_top_left = surface.get_rect().topleft
+    surf_top_right = surface.get_rect().topright
+    surf_bottomleft = surface.get_rect().bottomleft
+    surf_bottomright = surface.get_rect().bottomright
+    surf_center = surface.get_rect().center
+
+    top_txt_pos_offset = surf_marge_width-25
+    bottom_txt_pos_offset = surf_marge_width+10
+
+    pygame.draw.aacircle(window, color ,surf_top_left + offset_vector,5)
+    coordinate1 = font.render(f"({surf_top_left[0]},{surf_top_left[1]})",True,color)
+    window.blit(coordinate1, (surf_top_left[0]+ top_txt_pos_offset, surf_top_left[1]+ top_txt_pos_offset))
+
+    pygame.draw.aacircle(window, color,surf_top_right + offset_vector,5)
+    coordinate2 = font.render(f"({surf_top_right[0]},{surf_top_right[1]})", True,color)
+    window.blit(coordinate2, (surf_top_right[0]+top_txt_pos_offset+25, surf_top_right[1]+top_txt_pos_offset ))
+
+    pygame.draw.aacircle(window, color,surf_bottomleft + offset_vector, 5)
+    coordinate3 = font.render(f"({surf_bottomleft[0]},{surf_bottomleft[1]})", True, color)
+    window.blit(coordinate3, (surf_bottomleft[0] + bottom_txt_pos_offset - 50 , surf_bottomleft[1]+ bottom_txt_pos_offset))
+
+    pygame.draw.aacircle(window, color,surf_bottomright + offset_vector,5)
+    coordinate4 = font.render(f"({surf_bottomright[0]},{surf_bottomright[1]})", True, color)
+    window.blit(coordinate4, (surf_bottomright[0] + bottom_txt_pos_offset -20, surf_bottomleft[1] +bottom_txt_pos_offset))
 
 #Fonctions pour float
 
