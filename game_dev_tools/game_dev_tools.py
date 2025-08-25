@@ -144,14 +144,13 @@ def draw_coordinate_fraction(surface:pygame.Surface, divisions, font_size, font_
 
 def draw_grid(surface: pygame.Surface, divisions, color):
     # 2x2, 4x4 ou 8x8
-    surf_rect = surface.get_rect()
     denominator = divisions
     line_color = color
 
     surf_width = surface.get_width()
     surf_height = surface.get_height()
 
-    for numerator in range(0, denominator + 1):
+    for numerator in range(0, denominator + 1):gi
         # lignes horizontales
         pygame.draw.line(
             surface,
