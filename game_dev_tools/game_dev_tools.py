@@ -150,7 +150,7 @@ def draw_grid(surface: pygame.Surface, divisions, color):
     surf_width = surface.get_width()
     surf_height = surface.get_height()
 
-    for numerator in range(0, denominator + 1):gi
+    for numerator in range(0, denominator + 1):
         # lignes horizontales
         pygame.draw.line(
             surface,
