@@ -1,3 +1,19 @@
+__all__ = [
+    "circles_collide",
+    "get_collision_point_of_circles",
+    "get_collision_point_angle",
+    "draw_rect",
+    "draw_grid",
+    "draw_dots",
+    "draw_coordinate_fraction",
+    "float_range",
+    "create_surface",
+    "show_coordinate",
+    "show_surface",
+    "keep_circle_on_screen",
+    "Grid"
+]
+
 import math
 import pygame
 
@@ -56,6 +72,22 @@ def get_collision_point_angle(circles: list):
                circles[0].position[0] - circles[1].position[0])
 
     return collision_point_angle
+
+# la logique est correcte mais ne fonctionne pas pour l'instant
+def change_circles_direction_after_collision(circles: list):
+    # pointer la nouvelle direction vers le point opposé au point de collision
+    player = self.player
+    player2 = self.player2
+
+    collision_point = self.find_collision_point_of_circles([player,player2])
+    collision_opposite_point = self.find_collision_opposite_point_of_circles([player,player2])
+
+    player_direction = collision_point - collision_opposite_point
+    #print (player_direction)
+
+    #player.position.x =
+    player.velocity.x = math.cos(get_collision_opposite_point_of_circles([player,player2])) * player.speed_after_collision
+    player.velocity.y = math.sin(get_collision_opposite_point_of_circles([player, player2])) * player.speed_after_collision # #   #
 
 def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surface_height):
 
@@ -213,3 +245,47 @@ def float_range(start, stop, step):
         result.append(current)
         current += step
     return result
+
+# Classes
+
+class Grid:
+    def __init__(self, rows, lines):
+        self.rows = rows
+        self.lines = lines
+
+    def draw(self, surface:pygame.Surface):
+        rows = self.rows
+        lines = self.lines
+
+        surf_width = surface.get_width()
+        surf_height = surface.get_height()
+
+        row_width = surf_width / rows
+        line_height = surf_height / lines
+
+        for i in range(1,rows):
+            line_start = (i * row_width,0)
+            line_end = (i * row_width,surf_height)
+            pygame.draw.line(surface, (255,255,255), line_start, line_end)
+
+        for i in range(1, lines):
+            line_start = (0, i * line_height)
+            line_end = (surf_width, i * line_height)
+            pygame.draw.line(surface, (255, 255, 255), line_start, line_end )
+
+    def draw_dots(self, surface:pygame.Surface):
+        rows = self.rows
+        lines = self.lines
+
+        surf_width = surface.get_width()
+        surf_height = surface.get_height()
+
+        row_width = surf_width / rows
+        line_height = surf_height / lines
+
+        for i in range(0, rows + 1):
+            for j in range(0, lines + 1):
+                pygame.draw.circle(surface, (255, 255, 255), (i * row_width, j * line_height), 3)
+
+
+
