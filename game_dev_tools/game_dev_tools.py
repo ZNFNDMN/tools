@@ -71,7 +71,7 @@ def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surf
         if circle_y + circle_radius > surface_height:
             circle_y = surface_height - circle_radius
 
-def draw_rect(window:pygame.Surface,surf:pygame.Surface, divisions):
+def draw_rect(surf:pygame.Surface, divisions):
     #exemple 2x2, 4x4 ou 8x8
 
     surfaces = []
@@ -150,7 +150,7 @@ def draw_grid(surface: pygame.Surface, divisions, color):
     surf_width = surface.get_width()
     surf_height = surface.get_height()
 
-    for numerator in range(0, denominator + 1):gi
+    for numerator in range(0, denominator + 1):
         # lignes horizontales
         pygame.draw.line(
             surface,
