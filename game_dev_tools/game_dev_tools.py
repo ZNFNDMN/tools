@@ -11,7 +11,7 @@ __all__ = [
     "show_coordinate",
     "show_surface",
     "keep_circle_on_screen",
-    "Grid"
+    "VisualHelper"
 ]
 
 import math
@@ -157,7 +157,6 @@ def draw_dots(surface: pygame.Surface, divisions, color, radius):
                                  radius)
 
 def draw_coordinate_fraction(surface:pygame.Surface, divisions, font_size, font_color):
-
     denominator = divisions
     surf_width = surface.get_width()
     surf_height = surface.get_height()
@@ -248,44 +247,104 @@ def float_range(start, stop, step):
 
 # Classes
 
-class Grid:
-    def __init__(self, rows, lines):
-        self.rows = rows
-        self.lines = lines
+class VisualHelper:
+    def __init__(self, surface:pygame.Surface):
+        self.surface = surface
+        self.surface_width = surface.get_width()
+        self.surface_height = surface.get_height()
+        #sert à stocker les surfaces de la grille
+        self.surfaces = []
 
-    def draw(self, surface:pygame.Surface):
-        rows = self.rows
-        lines = self.lines
+        # Variables servant à stocker les valeurs pour blit_grid_surfaces
+        self.grid_rows = 0
+        self.grid_lines = 0
 
-        surf_width = surface.get_width()
-        surf_height = surface.get_height()
+    def draw_grid(self, rows, lines):
+        surface = self.surface
+        surf_width = self.surface_width
+        surf_height = self.surface_height
 
         row_width = surf_width / rows
         line_height = surf_height / lines
 
-        for i in range(1,rows):
-            line_start = (i * row_width,0)
-            line_end = (i * row_width,surf_height)
+        for row in range(1,rows):
+            line_start = (row * row_width,0)
+            line_end = (row * row_width,surf_height)
             pygame.draw.line(surface, (255,255,255), line_start, line_end)
 
-        for i in range(1, lines):
-            line_start = (0, i * line_height)
-            line_end = (surf_width, i * line_height)
+        for line in range(1, lines):
+            line_start = (0, line * line_height)
+            line_end = (surf_width, line * line_height)
             pygame.draw.line(surface, (255, 255, 255), line_start, line_end )
 
-    def draw_dots(self, surface:pygame.Surface):
-        rows = self.rows
-        lines = self.lines
-
-        surf_width = surface.get_width()
-        surf_height = surface.get_height()
+    def draw_dots(self, rows, lines):
+        surface = self.surface
+        surf_width = self.surface_width
+        surf_height = self.surface_height
 
         row_width = surf_width / rows
         line_height = surf_height / lines
 
         for i in range(0, rows + 1):
             for j in range(0, lines + 1):
-                pygame.draw.circle(surface, (255, 255, 255), (i * row_width, j * line_height), 3)
+                pygame.draw.aacircle(surface, (255, 255, 255), (i * row_width, j * line_height), 3)
 
+    def draw_coordinate_fraction(self, rows, lines, font_size):
+        surface = self.surface
+        surf_width = self.surface_width
+        surf_height = self.surface_height
 
+        row_width = surf_width / rows
+        line_height = surf_height / lines
 
+        font = pygame.font.Font(None, font_size)
+
+        for row in range(0, rows + 1):
+            for line in range(0, lines + 1):
+                x = row_width * row
+                y = line_height* line
+                text = f"({row},{line})"
+                #text = f"({x},{y})"
+                coordinates_text = font.render(text, True, (255,255,255))
+                pos_offset = 5
+                surface.blit(coordinates_text, (x + pos_offset, y + pos_offset))
+
+    def create_surfaces_in_grid(self, rows, lines):
+        #attribuer les valeurs aux variables pour réutilisation dans la fonction blit_grid_surfaces
+        self.grid_rows = rows
+        self.grid_lines = lines
+
+        surf_width = self.surface_width
+        surf_height = self.surface_height
+
+        row_width = surf_width / rows
+        line_height = surf_height / lines
+
+        for row in range(0, rows ):
+            for line in range(0, lines):
+                surface = pygame.surface.Surface((row_width, line_height))
+                surface.fill((255, 255, 255))
+                self.surfaces.append(surface)
+
+    def blit_grid_surfaces(self):
+        rows = self.grid_rows
+        lines = self.grid_lines
+
+        surf_width = self.surface_width
+        surf_height = self.surface_height
+
+        row_width = surf_width / rows
+        line_height = surf_height / lines
+
+        surfaces = self.surfaces
+
+        #variable pour parcourir la liste des surfaces
+        grid_surface_index = 0
+
+        for row in range(rows):
+            x = row *  row_width
+            for line in range(lines):
+                y = line * line_height
+                #(100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
+                surfaces[grid_surface_index].blit(surfaces[grid_surface_index], (x, y))
+                grid_surface_index += 1
