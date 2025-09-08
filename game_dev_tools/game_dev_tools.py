@@ -371,7 +371,7 @@ class PygameSurfaceFactory:
         for row in range(0,rows):
             for line in range(0, lines):
                 sub_surface = pygame.surface.Surface((row_width, line_height))
-                sub_surface.fill((100*color_i%255, 100*color_i%255, 100*color_i%255))
+                sub_surface.fill((3*color_i%255, 3*color_i%255, 3*color_i%255))
                 self.surf_list.append(sub_surface)
                 color_i+=1
 
