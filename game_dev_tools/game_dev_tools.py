@@ -11,7 +11,8 @@ __all__ = [
     "show_coordinate",
     "show_surface",
     "keep_circle_on_screen",
-    "VisualHelper"
+    "VisualHelper",
+    "PygameSurfaceFactory"
 ]
 
 import math
@@ -234,7 +235,6 @@ def show_coordinate(window:pygame.Surface, surface:pygame.Surface, font:pygame.f
     window.blit(coordinate4, (surf_bottomright[0] + bottom_txt_pos_offset -20, surf_bottomleft[1] +bottom_txt_pos_offset))
 
 #Fonctions pour float
-
 # Remplace la fonction range n'autorise pas le type float
 def float_range(start, stop, step):
     """Génère une séquence avec des steps décimaux"""
@@ -263,7 +263,6 @@ class VisualHelper:
         surface = self.surface
         surf_width = self.surface_width
         surf_height = self.surface_height
-
         row_width = surf_width / rows
         line_height = surf_height / lines
 
@@ -348,3 +347,49 @@ class VisualHelper:
                 #(100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
                 surfaces[grid_surface_index].blit(surfaces[grid_surface_index], (x, y))
                 grid_surface_index += 1
+
+# classe pour créer plusieurs surfaces dans une surface donné
+class PygameSurfaceFactory:
+    def __init__(self, surf_to_blit_in:pygame.surface.Surface, rows, lines):
+        self.surf_list = []
+        self.surf_to_blit_in = surf_to_blit_in
+        self.surf_to_blit_in_width = surf_to_blit_in.get_width()
+        self.surf_to_blit_in_height = surf_to_blit_in.get_height()
+        self.row_width = self.surf_to_blit_in_width / rows
+        self.line_height = self.surf_to_blit_in_height / lines
+        self.rows = rows
+        self.lines = lines
+
+    def create_surfaces(self):
+        surf_to_blit_in = self.surf_to_blit_in
+        row_width = self.row_width
+        line_height = self.line_height
+        rows = self.rows
+        lines = self.lines
+
+        color_i = 0
+        for row in range(0,rows):
+            for line in range(0, lines):
+                sub_surface = pygame.surface.Surface((row_width, line_height))
+                sub_surface.fill((100*color_i%255, 100*color_i%255, 100*color_i%255))
+                self.surf_list.append(sub_surface)
+                color_i+=1
+
+    def blit_surfaces(self):
+        surf_to_blit_in = self.surf_to_blit_in
+        row_width = self.row_width
+        line_height = self.line_height
+        rows = self.rows
+        lines = self.lines
+        surf_list = self.surf_list
+
+        # variable pour parcourir la liste des surfaces
+        sub_surf_index = 0
+
+        for row in range(rows):
+            for line in range(lines):
+                x = row * row_width
+                y = line * line_height
+                # (100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
+                surf_to_blit_in.blit(surf_list[sub_surf_index], (x, y))
+                sub_surf_index += 1
