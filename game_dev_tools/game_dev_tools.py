@@ -12,7 +12,11 @@ __all__ = [
     "show_surface",
     "keep_circle_on_screen",
     "VisualHelper",
-    "PygameSurfaceFactory"
+    "PygameSurfaceFactory",
+    "PygameSurfaceFactory",
+    "GameEntity",
+    "MovingEntity",
+    "Shape"
 ]
 
 import math
@@ -393,3 +397,52 @@ class PygameSurfaceFactory:
                 # (100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
                 surf_to_blit_in.blit(surf_list[sub_surf_index], (x, y))
                 sub_surf_index += 1
+
+class GameEntity(pygame.sprite.Sprite):
+    def __init__(self, target_surf,shape,color,size, pos):
+        super().__init__()
+        self.target_surf=target_surf
+        self.shape=shape
+        self.size = size
+        self.pos = pos
+        self.color=color
+
+class MovingEntity(GameEntity):
+    # Couleur blanc par défaut
+    def __init__(self,target_surf,shape,pos,color=(255,255,255),size=20,border_width=0,delta_time=0):
+        super().__init__(target_surf,shape,color,size,pos)
+        self.delta_time = delta_time
+        self.border_width = border_width
+
+    def handle_input(self):
+        pass
+
+    def keep_on_screen(self):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.shape.draw(self.target_surf, self.color, self.pos, self.size, self.border_width)
+
+class Shape:
+    def __init__(self,pos,color):
+        self.color = color
+        self.pos = pos
+
+class Circle(Shape):
+    def __init__(self):
+        #super().__init__(color,pos)
+        pass
+
+    def draw(self,target_surf, color, pos, size, border_width):
+        pygame.draw.circle(target_surf,
+                           color,
+                           pos,
+                            size,
+                            border_width
+        )
+
+
+
