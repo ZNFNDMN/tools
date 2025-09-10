@@ -15,7 +15,7 @@ __all__ = [
     "PygameSurfaceFactory",
     "PygameSurfaceFactory",
     "GameEntity",
-    "MovingEntity",
+    "Player",
     "Shape"
 ]
 
@@ -407,12 +407,13 @@ class GameEntity(pygame.sprite.Sprite):
         self.pos = pos
         self.color=color
 
-class MovingEntity(GameEntity):
+class Player(GameEntity):
     # Couleur blanc par défaut
     def __init__(self,target_surf,shape,pos,color=(255,255,255),size=20,border_width=0,delta_time=0):
         super().__init__(target_surf,shape,color,size,pos)
         self.delta_time = delta_time
         self.border_width = border_width
+        self.movement_system = PlayerMovementSystem(self)
 
     def handle_input(self):
         pass
@@ -421,10 +422,22 @@ class MovingEntity(GameEntity):
         pass
 
     def update(self):
-        pass
+        self.movement_system.move()
 
     def draw(self):
         self.shape.draw(self.target_surf, self.color, self.pos, self.size, self.border_width)
+
+class MovementSystem():
+    pass
+
+class PlayerMovementSystem(MovementSystem):
+    def __init__(self, player:Player):
+        self.player = player
+
+    def move(self):
+        mouse_pos = pygame.mouse.get_pos()
+        self.player.pos = mouse_pos
+
 
 class Shape:
     def __init__(self,pos,color):
@@ -437,11 +450,12 @@ class Circle(Shape):
         pass
 
     def draw(self,target_surf, color, pos, size, border_width):
-        pygame.draw.circle(target_surf,
-                           color,
-                           pos,
-                            size,
-                            border_width
+        pygame.draw.circle(
+            target_surf,
+            color,
+            pos,
+            size,
+            border_width
         )
 
 
