@@ -16,7 +16,11 @@ __all__ = [
     "PygameSurfaceFactory",
     "GameEntity",
     "Player",
-    "Shape"
+    "Shape",
+    "MovementSystem",
+    "PlayerMovementSystem",
+    "MouseMovementSystem",
+    "KeyboardMovementSystem"
 ]
 
 import math
@@ -112,36 +116,16 @@ def draw_rect(surf:pygame.Surface, divisions):
     #exemple 2x2, 4x4 ou 8x8
     surfaces = []
 
-    denominator = divisions
-
     surf_width = surf.get_width()
     surf_height = surf.get_height()
 
-    rect_width = surf_width * 1 / denominator
-    rect_height = surf_height * 1 / denominator
+    rect_width = surf_width / divisions
+    rect_height = surf_height / divisions
 
-    # draw the rects
-    blue_variations = []
-    for color_name in pygame.color.THECOLORS:
-        if 'blue' in color_name.lower():
-            blue_variations.append((color_name, pygame.color.THECOLORS[color_name]))
-
-    color_index = 0
-
-    for numerator1 in range(0, denominator):
-        color_index += 1
-        for numerator2 in range(0, denominator):
-            color_index += 1
-            #rects.append(pygame.draw.rect(surface, blue_variations[color_index][1], (surf_width * numerator2/denominator, surf_height * numerator1/denominator, rect_width, rect_height)))
+    for row in range(divisions):
+        for line in range(divisions):
             surface = pygame.surface.Surface((rect_width, rect_height))
-            #surface.fill(blue_variations[-color_index][1])
-            #surf.blit(surface, (surf_width * numerator2 / denominator, surf_height * numerator1 / denominator))
-            #print(f"x : {surf_width * numerator2 / denominator}, y : {surf_height * numerator1 / denominator}")
             surfaces.append(surface)
-            if color_index == len(blue_variations)-1:
-                color_index = 0
-
-    #print("------------------------------------------------")
     return surfaces
 
 def draw_dots(surface: pygame.Surface, divisions, color, radius):
@@ -312,6 +296,7 @@ class VisualHelper:
                 pos_offset = 5
                 surface.blit(coordinates_text, (x + pos_offset, y + pos_offset))
 
+    ###### à supprimer
     def create_surfaces_in_grid(self, rows, lines):
         #attribuer les valeurs aux variables pour réutilisation dans la fonction blit_grid_surfaces
         self.grid_rows = rows
@@ -327,8 +312,9 @@ class VisualHelper:
             for line in range(0, lines):
                 surface = pygame.surface.Surface((row_width, line_height))
                 surface.fill((255, 255, 255))
-                self.surfaces.append(surface)
+                self.surfaces.append(surface) ######
 
+    ###### à supprimer
     def blit_grid_surfaces(self):
         rows = self.grid_rows
         lines = self.grid_lines
@@ -365,19 +351,23 @@ class PygameSurfaceFactory:
         self.lines = lines
 
     def create_surfaces(self):
-        surf_to_blit_in = self.surf_to_blit_in
         row_width = self.row_width
         line_height = self.line_height
         rows = self.rows
         lines = self.lines
 
-        color_i = 0
         for row in range(0,rows):
             for line in range(0, lines):
                 sub_surface = pygame.surface.Surface((row_width, line_height))
-                sub_surface.fill((3*color_i%255, 3*color_i%255, 3*color_i%255))
                 self.surf_list.append(sub_surface)
-                color_i+=1
+
+    def fill_surfaces(self):
+        surf_list = self.surf_list
+
+        color_i = 0
+        for surf in range(len(surf_list)):
+            surf_list[surf].fill((3 * color_i % 255, 3 * color_i % 255, 3 * color_i % 255))
+            color_i += 1
 
     def blit_surfaces(self):
         surf_to_blit_in = self.surf_to_blit_in
@@ -399,22 +389,24 @@ class PygameSurfaceFactory:
                 sub_surf_index += 1
 
 class GameEntity(pygame.sprite.Sprite):
-    def __init__(self, target_surf,shape,color,size, pos):
+    def __init__(self, target_surf,shape,color,size, pos:pygame.Vector2, velocity:pygame.Vector2, speed):
         super().__init__()
         self.target_surf=target_surf
         self.shape=shape
+        self.movement_system=None
         self.size = size
         self.pos = pos
         self.color=color
+        self.velocity=velocity
+        self.speed=speed
 
 class Player(GameEntity):
     # Couleur blanc par défaut
-    def __init__(self,target_surf,shape,pos,color=(255,255,255),size=20,border_width=0,delta_time=0):
-        super().__init__(target_surf,shape,color,size,pos)
+    def __init__(self,target_surf,pos,circle,velocity=pygame.Vector2(0,0), speed=0,color=(255,255,255),size=20,border_width=0,delta_time=0):
+        # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
+        super().__init__(target_surf,circle,color,size,pos,velocity,speed)
         self.delta_time = delta_time
         self.border_width = border_width
-        self.movement_system = PlayerMovementSystem(self)
-
     def handle_input(self):
         pass
 
@@ -425,29 +417,79 @@ class Player(GameEntity):
         self.movement_system.move()
 
     def draw(self):
-        self.shape.draw(self.target_surf, self.color, self.pos, self.size, self.border_width)
+        self.shape.draw(self.target_surf, self.shape.color, self.pos, self.size, self.border_width)
 
-class MovementSystem():
+class MovementSystem:
     pass
 
 class PlayerMovementSystem(MovementSystem):
-    def __init__(self, player:Player):
-        self.player = player
+    def __init__(self,game_entity): # récupérer l'instance pour gérer la position
+        self.game_entity=game_entity
 
     def move(self):
-        mouse_pos = pygame.mouse.get_pos()
-        self.player.pos = mouse_pos
+        self.game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1])
 
+class MouseMovementSystem(MovementSystem):
+    def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
+        self.game_entity = game_entity
+        self.surface=surface
+
+    def move(self):
+        game_entity  =self.game_entity
+        surface_width=self.surface.get_width()
+        surface_height=self.surface.get_height()
+        game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+        if game_entity.pos.x - game_entity.size < 0:
+            game_entity.pos.x = game_entity.size
+        if game_entity.pos.x + game_entity.size > surface_width:
+            game_entity.pos.x = surface_width - game_entity.size
+        if game_entity.pos.y - game_entity.size < 0:
+            game_entity.pos.y = game_entity.size
+        if game_entity.pos.y + game_entity.size > surface_height:
+            game_entity.pos.y = surface_height - game_entity.size
+
+class KeyboardMovementSystem(MovementSystem):
+    def __init__(self, game_entity, surface):
+        self.game_entity = game_entity
+        self.surface = surface
+
+    def move(self):
+
+        game_entity =self.game_entity
+        surface_width=self.surface.get_width()
+        surface_height=self.surface.get_height()
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT]:
+            game_entity.velocity.x = -game_entity.speed
+        if keys[pygame.K_RIGHT]:
+            game_entity.velocity.x = game_entity.speed
+        if keys[pygame.K_UP]:
+            game_entity.velocity.y = -game_entity.speed
+        if keys[pygame.K_DOWN]:
+            game_entity.velocity.y = game_entity.speed
+
+        if game_entity.pos.x - game_entity.size < 0:
+            game_entity.velocity.x = game_entity.speed
+        if game_entity.pos.x + game_entity.size > surface_width:
+            game_entity.velocity.x = -game_entity.speed
+        if game_entity.pos.y - game_entity.size < 0:
+            game_entity.velocity.y = game_entity.speed
+        if game_entity.pos.y + game_entity.size > surface_height:
+            game_entity.velocity.y = -game_entity.speed
+
+        game_entity.pos.x += game_entity.velocity.x
+        game_entity.pos.y += game_entity.velocity.y
 
 class Shape:
-    def __init__(self,pos,color):
-        self.color = color
-        self.pos = pos
+    def __init__(self,color):
+        self.color=color
 
 class Circle(Shape):
-    def __init__(self):
-        #super().__init__(color,pos)
-        pass
+    def __init__(self, color):
+        super().__init__(color)
 
     def draw(self,target_surf, color, pos, size, border_width):
         pygame.draw.circle(
