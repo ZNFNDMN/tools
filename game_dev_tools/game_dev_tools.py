@@ -12,19 +12,36 @@ __all__ = [
     "show_surface",
     "keep_circle_on_screen",
     "VisualHelper",
-    "PygameSurfaceFactory",
+    "GameText",
     "PygameSurfaceFactory",
     "GameEntity",
     "Player",
     "Shape",
+    "Circle",
+    "Rectangle",
+    "Polygon",
+    "Ellipse",
     "MovementSystem",
-    "PlayerMovementSystem",
     "MouseMovementSystem",
-    "KeyboardMovementSystem"
+    "Animation",
+    "KeyboardMovementSystem",
+    "GameEntityAppearance",
+    "PlayerAppearence",
+    "PlayerAppearence2",
+    "PlayerAppearance3",
+    "PlayerAppearance4",
+    "PlayerAppearance5",
+    "PlayerAppearance6",
+    "PlayerAppearance7",
+    "PlayerAppearance8",
+    "EntityAppearance",
+    "ProceduralEnemyFactory"
 ]
 
-import math
+from inspect import isclass
+from math import cos, sin, degrees,radians, pi, atan2
 import pygame
+from pygame import *
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -338,6 +355,15 @@ class VisualHelper:
                 surfaces[grid_surface_index].blit(surfaces[grid_surface_index], (x, y))
                 grid_surface_index += 1
 
+class GameText:
+    def __init__(self, surface:pygame.Surface, font_size):
+        self.font = Font(None, font_size)
+        self.surface = surface
+
+    def blit_text(self, text:str, pos,color=(255,255,255)):
+        txt = self.font.render(text,True,color)
+        self.surface.blit(txt,pos)
+
 # classe pour créer plusieurs surfaces dans une surface donné
 class PygameSurfaceFactory:
     def __init__(self, surf_to_blit_in:pygame.surface.Surface, rows, lines):
@@ -389,116 +415,581 @@ class PygameSurfaceFactory:
                 sub_surf_index += 1
 
 class GameEntity(pygame.sprite.Sprite):
-    def __init__(self, target_surf,shape,color,size, pos:pygame.Vector2, velocity:pygame.Vector2, speed):
+    def __init__(self, target_surf,color, pos:pygame.Vector2, velocity:pygame.Vector2, speed, angle_increment):
+        # if isclass(central_shape):
+        #     print("Oubli de parenthéses à l'instanciation du central shape")
+        #     raise ValueError
+
         super().__init__()
         self.target_surf=target_surf
-        self.shape=shape
+        self.game_entity_appearance=None
         self.movement_system=None
-        self.size = size
         self.pos = pos
         self.color=color
         self.velocity=velocity
         self.speed=speed
+        self.angle_increment=angle_increment# for polygon
+        # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
+        # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
+        # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
+        self.radius = 20
+        self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
+        # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
+        #     self.width_height = (self.radius*2, self.radius*2)
+        #     self.rect = Rect(self.pos, self.width_height)
+        # elif isinstance(self.central_shape,Rectangle):
+        #     self.width_height = (40,40)
+        #     self.rect = Rect(self.pos, self.width_height)
 
 class Player(GameEntity):
     # Couleur blanc par défaut
-    def __init__(self,target_surf,pos,circle,velocity=pygame.Vector2(0,0), speed=0,color=(255,255,255),size=20,border_width=0,delta_time=0):
+    def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
         # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
-        super().__init__(target_surf,circle,color,size,pos,velocity,speed)
+        super().__init__(target_surf,color,pos,velocity,speed, angle_increment)
         self.delta_time = delta_time
         self.border_width = border_width
-    def handle_input(self):
-        pass
 
-    def keep_on_screen(self):
+    def handle_input(self):
         pass
 
     def update(self):
         self.movement_system.move()
 
     def draw(self):
-        self.shape.draw(self.target_surf, self.shape.color, self.pos, self.size, self.border_width)
+        self.game_entity_appearance.draw()
+
+class Enemy(GameEntity):
+    def __init__(self, target_surf, pos, central_shape, angle_increment=30, velocity=pygame.Vector2(0, 0), speed=1,
+                 color=(255, 255, 255), border_width=0, delta_time=0):
+        # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
+        super().__init__(target_surf, color, pos, velocity, speed, central_shape, angle_increment)
+        self.delta_time = delta_time
+        self.border_width = border_width
+
+    def update(self):
+        self.movement_system.move()
+
+    def draw(self):
+        self.game_entity_appearence.draw()
+
+################### Movement systems
 
 class MovementSystem:
-    pass
-
-class PlayerMovementSystem(MovementSystem):
-    def __init__(self,game_entity): # récupérer l'instance pour gérer la position
-        self.game_entity=game_entity
-
-    def move(self):
-        self.game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1])
-
-class MouseMovementSystem(MovementSystem):
-    def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
-        self.game_entity = game_entity
-        self.surface=surface
-
-    def move(self):
-        game_entity  =self.game_entity
-        surface_width=self.surface.get_width()
-        surface_height=self.surface.get_height()
-        game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-
-        if game_entity.pos.x - game_entity.size < 0:
-            game_entity.pos.x = game_entity.size
-        if game_entity.pos.x + game_entity.size > surface_width:
-            game_entity.pos.x = surface_width - game_entity.size
-        if game_entity.pos.y - game_entity.size < 0:
-            game_entity.pos.y = game_entity.size
-        if game_entity.pos.y + game_entity.size > surface_height:
-            game_entity.pos.y = surface_height - game_entity.size
-
-class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
         self.game_entity = game_entity
         self.surface = surface
 
+    def keep_game_entity_on_screen(self):
+        game_entity = self.game_entity
+
+        circle = isinstance(game_entity.central_shape, Circle)
+        rectangle = isinstance(game_entity.central_shape, Rectangle)
+        polygon = isinstance(game_entity.central_shape, Polygon)
+
+        if circle or polygon:
+            self.keep_circle_on_screen()
+        if rectangle:
+            self.keep_rectangle_on_screen()
+
+    def keep_circle_on_screen(self):
+        game_entity = self.game_entity
+        surface_width = self.surface.get_width()
+        surface_height = self.surface.get_height()
+
+        collide_with_surface_left = game_entity.pos.x - game_entity.radius < 0
+        collide_with_surface_right = game_entity.pos.x + game_entity.radius > surface_width
+        collide_with_surface_top = game_entity.pos.y - game_entity.radius < 0
+        collide_with_surface_bottom = game_entity.pos.y + game_entity.radius > surface_height
+
+        if isinstance(game_entity.movement_system, MouseMovementSystem):
+            if collide_with_surface_left: game_entity.pos.x = game_entity.radius
+            if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.radius
+            if collide_with_surface_top: game_entity.pos.y = game_entity.radius
+            if collide_with_surface_bottom: game_entity.pos.y = surface_height - game_entity.radius
+        if isinstance(game_entity.movement_system, KeyboardMovementSystem):
+            if collide_with_surface_left:   game_entity.velocity.x = game_entity.speed
+            if collide_with_surface_right:  game_entity.velocity.x = -game_entity.speed
+            if collide_with_surface_top:  game_entity.velocity.y = game_entity.speed
+            if collide_with_surface_bottom: game_entity.velocity.y = -game_entity.speed
+
+    def keep_rectangle_on_screen(self):
+        game_entity = self.game_entity
+        surface_width = self.surface.get_width()
+        surface_height = self.surface.get_height()
+        rect_width = game_entity.width_height[0]
+        rect_height = game_entity.width_height[1]
+
+        collide_with_surface_left = game_entity.pos.x - rect_width/2 < 0
+        collide_with_surface_right = game_entity.pos.x + rect_width/2 > surface_width
+        collide_with_surface_top = game_entity.pos.y - rect_height/2 < 0
+        collide_with_surface_bottom = game_entity.pos.y + rect_height/2 > surface_height
+
+        mouse_movement_system = isinstance(game_entity.movement_system, MouseMovementSystem)
+        keyboard_movement_system = isinstance(game_entity.movement_system, KeyboardMovementSystem)
+
+        if mouse_movement_system :
+            if collide_with_surface_left: game_entity.pos.x = game_entity.width_height
+            if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.width_height
+            if collide_with_surface_bottom: game_entity.pos.y = game_entity.width_height
+            if collide_with_surface_top:game_entity.pos.y = surface_height - game_entity.width_height
+        if keyboard_movement_system:
+            if collide_with_surface_left: game_entity.velocity.x = game_entity.speed
+            if collide_with_surface_right: game_entity.velocity.x = -game_entity.speed
+            if collide_with_surface_bottom: game_entity.velocity.y = -game_entity.speed
+            if collide_with_surface_top: game_entity.velocity.y = game_entity.speed
+
+class MouseMovementSystem(MovementSystem):
+    def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
+        super().__init__(game_entity, surface)
+
     def move(self):
+        game_entity  =self.game_entity
+        game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+        game_entity.rect.center = game_entity.pos
+        self.keep_game_entity_on_screen()
 
+class KeyboardMovementSystem(MovementSystem):
+    def __init__(self, game_entity, surface):
+        super().__init__(game_entity, surface)
+
+    def move(self):
         game_entity =self.game_entity
-        surface_width=self.surface.get_width()
-        surface_height=self.surface.get_height()
-
         keys = pygame.key.get_pressed()
+        left = keys[pygame.K_LEFT]
+        right = keys[pygame.K_RIGHT]
+        up = keys[pygame.K_UP]
+        down = keys[pygame.K_DOWN]
 
-        if keys[pygame.K_LEFT]:
-            game_entity.velocity.x = -game_entity.speed
-        if keys[pygame.K_RIGHT]:
-            game_entity.velocity.x = game_entity.speed
-        if keys[pygame.K_UP]:
-            game_entity.velocity.y = -game_entity.speed
-        if keys[pygame.K_DOWN]:
-            game_entity.velocity.y = game_entity.speed
+        if left: game_entity.velocity.x = -game_entity.speed
+        if right: game_entity.velocity.x = game_entity.speed
+        if up: game_entity.velocity.y = -game_entity.speed
+        if down: game_entity.velocity.y = game_entity.speed
 
-        if game_entity.pos.x - game_entity.size < 0:
-            game_entity.velocity.x = game_entity.speed
-        if game_entity.pos.x + game_entity.size > surface_width:
-            game_entity.velocity.x = -game_entity.speed
-        if game_entity.pos.y - game_entity.size < 0:
-            game_entity.velocity.y = game_entity.speed
-        if game_entity.pos.y + game_entity.size > surface_height:
-            game_entity.velocity.y = -game_entity.speed
+        self.keep_game_entity_on_screen()
 
-        game_entity.pos.x += game_entity.velocity.x
-        game_entity.pos.y += game_entity.velocity.y
+        game_entity.pos += game_entity.velocity
 
-class Shape:
-    def __init__(self,color):
-        self.color=color
+class ProceduralEnemyFactory:
+    def __init__(self, surface):
+        self.surface= surface
 
-class Circle(Shape):
-    def __init__(self, color):
-        super().__init__(color)
+    def rotate_around_surface(self):
+        surface = self.surface
+        surf_center_x = self.surface.get_rect().centerx
+        surf_center_y = self.surface.get_rect().centery
+        surf_width = self.surface.get_width()
+        surf_height = self.surface.get_height()
 
-    def draw(self,target_surf, color, pos, size, border_width):
-        pygame.draw.circle(
-            target_surf,
-            color,
-            pos,
-            size,
-            border_width
+        time = pygame.time.get_ticks()/1000
+        time_with_speed = time * 10
+
+        angle_i = 90
+        for angle in range(0,360, angle_i):
+            coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
+                                              radians(time_with_speed+angle),
+                                              surf_width,
+                                              surf_height
+            )
+
+            enemy = Enemy(surface,pygame.Vector2(coordinate),Circle())
+            enemy.game_entity_appearence = PlayerAppearance4([], enemy)
+            enemy.size = 80
+            enemy.color = (100,100,100)
+            enemy.draw()
+            #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
+
+################## Animations
+
+class Animation:
+    def __init__(self, shapes:list):
+        self.shapes=shapes
+
+class GameEntityAppearance(Animation):
+    def __init__(self, shapes: list, game_entity):
+        super().__init__(shapes)
+        self.game_entity=game_entity
+
+    def draw_game_entity_primary_shape(self):
+        game_entity = self.game_entity
+
+        circle = isinstance(game_entity.central_shape, Circle)
+        rectangle = isinstance(game_entity.central_shape, Rectangle)
+        polygon = isinstance(game_entity.central_shape, Polygon)
+
+        if circle: self.draw_game_entity_primary_circle()
+        if rectangle: self.draw_game_entity_primary_rect()
+        if polygon: self.draw_game_entity_primary_polygon()
+
+    def draw_game_entity_primary_circle(self):
+        game_entity = self.game_entity
+        game_entity.central_shape.draw(
+            game_entity.target_surf,
+            game_entity.color,
+            game_entity.pos,
+            game_entity.radius,
+            game_entity.border_width
         )
 
+    def draw_game_entity_primary_rect(self):
+        game_entity = self.game_entity
+        game_entity.central_shape.draw(
+            game_entity.target_surf,
+            game_entity.color,
+            game_entity.pos,
+            game_entity.width_height,
+            game_entity.border_width
+        )
+
+    def draw_game_entity_primary_polygon(self):
+        game_entity = self.game_entity
+        game_entity.central_shape.draw(
+            game_entity.target_surf,
+            game_entity.color,
+            game_entity.pos,
+            game_entity.radius,
+            game_entity.angle_increment,
+            game_entity.border_width
+        )
+
+class PlayerAppearence(GameEntityAppearance):
+    def __init__(self, shapes:list, player):
+        super().__init__(shapes, player)
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        radius = game_entity.size
+        player_x = game_entity.pos[0]
+        player_y = game_entity.pos[1]
+        surface = game_entity.target_surf
+        color = game_entity.color
+
+        step = radius / 4
+        start = player_y - radius
+        stop = player_y
+
+        i = 1
+        for y in float_range(player_y - radius, stop, step):
+            Ellipse().draw(surface, color, (player_x, y), (radius*i, 10), 1)
+            i+=1
+
+class PlayerAppearence2(GameEntityAppearance):
+    def __init__(self, shapes:list, player):
+        super().__init__(shapes, player)
+        self.player=player
+
+    def draw(self):
+        self.draw_game_entity_primary_shape()
+        # rect = Rectangle()
+        # time = pygame.time.get_ticks()/1000
+        # rect.draw(self.player.target_surf,self.player.color,self.player.pos,self.player.size,self.player.border_width)
+        # angle_i = 10
+        # rep = 360/angle_i
+        # i=0
+        # color_in_range = 255//rep
+        # for angle in range(0,360, angle_i):
+        #     x = self.player.pos[0]+ (math.tan(time)) * math.cos(time+math.radians(angle))
+        #     y = self.player.pos[1] + (math.tan(time)) * math.sin(time+math.radians(angle))
+        #     orbital_rect = Rectangle()
+        #     orbital_rect.draw(self.player.target_surf, ((255-i),0,0), (x,y),self.player.size, 1)
+        #     i+=1
+        #     print(i)
+
+class PlayerAppearance3(GameEntityAppearance):
+    def __init__(self, shapes:list, player):
+        super().__init__(shapes, player)
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        self.draw_object_around_radius(
+            game_entity.target_surf,
+            game_entity.pos,
+            game_entity.color,
+            90,
+            100,
+            30,
+            Circle()
+        )
+        # angle_increment = 45
+        # for angle in range(0,360,angle_increment):
+        #     x = game_entity.pos.x + game_entity.size * (cos(radians(angle)))
+        #     y = game_entity.pos.y + game_entity.size * (sin(radians(angle)))
+        #     Circle().draw(game_entity.target_surf,game_entity.color,(x,y), game_entity.size)
+
+    def draw_object_around_radius(self,surface,pos,color,angle_increment,radius, radius2,shape):
+        for angle in range(0,360,angle_increment):
+            x = pos.x + radius * (cos(radians(angle)))
+            y = pos.y + radius * (sin(radians(angle)))
+            shape.draw(surface, color, (x,y), radius2)
+
+class PlayerAppearance4(GameEntityAppearance):
+    def __init__(self, shapes: list, player):
+        super().__init__(shapes, player)
+        self.player = player
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        time  = pygame.time.get_ticks()/1000
+
+        angle_i = 10
+        for angle in range(0,360,angle_i):
+            x = game_entity.pos[0] + game_entity.size * cos(radians(angle))
+            y = game_entity.pos[1] + game_entity.size * sin(time+radians(angle))
+            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),5 )
+            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),20, 1 )
+
+        for angle in range(0, 360, angle_i):
+            x = game_entity.pos[0] + game_entity.size * sin(radians(angle))
+            y = game_entity.pos[1] + game_entity.size * cos(time + radians(angle))
+            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),20, 1 )
+            Circle().draw(game_entity.target_surf, game_entity.color, (x, y), 5, )
+
+class PlayerAppearance5(GameEntityAppearance):
+    def __init__(self, shapes: list, player):
+        super().__init__(shapes, player)
+        self.player = player
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        radius = game_entity.size
+        player_x = game_entity.pos[0]
+        player_y = game_entity.pos[1]
+        surface = game_entity.target_surf
+        color = game_entity.color
 
 
+        step = radius / 10
+        start = player_y-radius
+        stop = player_y+radius+step
+
+        for y in float_range(player_y-radius,stop, step):
+            Ellipse().draw(surface,color,(player_x,y),(y,10+y),1)
+
+class PlayerAppearance6(GameEntityAppearance):
+    def __init__(self, shapes: list, player):
+        super().__init__(shapes, player)
+        self.player = player
+        self.angle = 0
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        radius = game_entity.size
+        player_x = game_entity.pos[0]
+        player_y = game_entity.pos[1]
+        surface = game_entity.target_surf
+        color = game_entity.color
+
+        time = pygame.time.get_ticks()/1000
+        dt = pygame.Clock().tick(60)/1000
+        #centre
+
+        game_text  = GameText(surface, 20)
+        game_text.blit_text(str(dt),(5,5))
+
+        start_pos = game_entity.pos
+        initial_direction = pygame.Vector2(1,0) #
+
+        angle_i = 30
+
+        for angle in range(0, 360, angle_i):
+            direction = initial_direction.rotate(-(time*100)+angle)
+            end_pos = start_pos + direction * radius
+            Line().draw(surface,color, start_pos, end_pos)
+
+class PlayerAppearance7(GameEntityAppearance):
+    def __init__(self, shapes: list, player):
+        super().__init__(shapes, player)
+        self.player = player
+        self.angle = 0
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        radius = game_entity.size
+        player_x = game_entity.pos[0]
+        player_y = game_entity.pos[1]
+        surface = game_entity.target_surf
+        color = game_entity.color
+
+        time = pygame.time.get_ticks()/1000
+        angle = time
+        start_pos = game_entity.pos
+        direction = pygame.Vector2(cos(angle), sin(angle))  #
+        end_pos = start_pos + direction * radius
+        angle_i = 30
+
+        for angle in range(0,360,angle_i):
+            start_pos = game_entity.pos
+            direction = pygame.Vector2(cos(radians(angle)), sin(radians(angle)))  #
+            end_pos = start_pos + direction * radius
+            Line().draw(surface, color, start_pos, end_pos)
+
+class PlayerAppearance8(GameEntityAppearance):
+    def __init__(self, shapes:list, player):
+        super().__init__(shapes, player)
+
+    def draw(self):
+        game_entity = self.game_entity
+        surface = game_entity.target_surf
+        color = game_entity.color
+
+        radius = game_entity.radius
+        pos =  game_entity.pos
+
+        Circle(surface, pos, radius).draw()
+
+class EntityAppearance(GameEntityAppearance):
+    def __init__(self, shapes: list, player):
+        super().__init__(shapes, player)
+        self.player = player
+        self.angle = 0
+
+    def draw(self):
+        game_entity = self.game_entity
+        self.draw_game_entity_primary_shape()
+        radius = game_entity.size
+        entity_x = game_entity.pos[0]
+        entity_y = game_entity.pos[1]
+        surface = game_entity.target_surf
+        color = game_entity.color
+        time = pygame.time.get_ticks()/1000
+
+
+        center = pygame.Vector2(game_entity.pos)
+
+        init_vector_i = pygame.Vector2(1,0)  # Vecteur de direction correspondant à l'axe x
+        init_vector_j = pygame.Vector2(0,1)  # Vecteur de direction correspondant à l'axe y
+
+
+        for i in range(-80, 81, 20):
+            for j in range(-80,81,20):
+                pos = center + init_vector_i.rotate(degrees(time*0.1)) * i  + init_vector_j.rotate(degrees(time*0.1)) * j
+                #Line().draw(surface, color, center, (x, y))
+                Circle().draw(surface, (255, 0, 0), pos, 100 * cos(time), 1)
+
+
+        Circle().draw(surface, (0,255,0), (center[0],center[1]), 10,1)
+
+        # multiplicateur
+        # for i in range(1,11,2):
+        #     for j in range(1,11,2):
+        #         x = center * vector_i * i
+        #         y = center * vector_j * j
+        #         Line().draw(surface, color, center, (x,y))
+        #         Circle().draw(surface, (255, 0, 0), (x,y),3)
+
+        # for i in range(1, 11, 2):
+        #     for j in range(1,11,2):
+        #         vector_i = init_vector_i * i
+        #         vector_j = init_vector_j * j
+        #         x = center * vector_i
+        #         y = center * vector_j
+        #         Line().draw(surface, color, center, (x, y))
+        #         Circle().draw(surface, (255, 0, 0), (x,y),3)
+
+class Shape:
+    def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
+        self.pos = pos
+        self.color = (255,255,255)
+        self.border_width = 1
+        self.target_surf = target_surf
+
+class Circle(Shape):
+    def __init__(self, target_surf, pos, radius):
+        super().__init__(target_surf, pos)
+        # 2 attributs nécessaires pour pouvoir gérer les collisions avec pygame.sprite.circle_collide
+        self.radius =  radius
+        self.rect = None
+
+    def draw(self):
+        pygame.draw.circle(
+            self.target_surf,
+            self.color,
+            self.pos,
+            self.radius,
+            self.border_width
+        )
+
+class Rectangle(Shape):
+    def __init__(self, target_surf, pos):
+        super().__init__(target_surf, pos)
+
+    def draw(self,target_surf:pygame.Surface,pos, width_height:tuple=(40,40)):
+        rect = pygame.Rect(self.pos, width_height)
+        rect.center = self.pos
+        pygame.draw.rect(self.target_surf, self.color, rect, self.border_width)
+
+class Polygon(Shape):
+    def __init__(self, target_surf, pos):
+        super().__init__(target_surf, pos)
+
+    def draw(self, radius:int, angle_increment):
+        # transmettre les angles correspondant aux points
+
+        points = []
+        for angle in range(0,360, angle_increment):
+            x = self.pos.x + radius * cos(radians(angle))
+            y = self.pos.y + radius * sin(radians(angle))
+            points.append((x,y))
+
+        pygame.draw.polygon(self.target_surf, self.color, points, self.border_width)
+
+class Ellipse(Shape):
+    def __init__(self, target_surf, pos):
+        super().__init__(target_surf, pos)
+
+    def draw(self, width_height: tuple = (40, 20)):
+        rect = pygame.Rect((0, 0), width_height)
+        rect.center = self.pos
+        pygame.draw.ellipse(self.target_surf, self.color, rect, self.border_width)
+
+class Line(Shape):
+    def __init__(self, target_surf,start_pos:pygame.Vector2,end_pos:pygame.Vector2):
+        super().__init__(target_surf, start_pos)
+        self.end_pos = end_pos
+
+    def draw(self,  start_pos, end_pos):
+        start_pos = self.pos
+        pygame.draw.line(self.target_surf, self.color, start_pos, self.end_pos, self.border_width)
+
+class ProceduralAnimation:
+    def __init__(self,entity):
+        self.entity=entity
+
+# fonctions utilitaire
+
+def angle_to_perimeter( center, angle, largeur, hauteur):
+    """Méthode unifiée pour carré ET rectangle"""
+    angle = angle % (2 * pi)
+    if angle < 0:
+        angle += 2 * pi
+
+    demi_largeur = largeur / 2
+    demi_hauteur = hauteur / 2
+    perimetre = 2 * (largeur + hauteur)
+
+    # Position sur le périmètre (0 à perimetre)
+    pos_perimetre = (angle / (2 * pi)) * perimetre
+
+    if pos_perimetre <= largeur:
+        # Côté bas (de gauche à droite)
+        x = -demi_largeur + pos_perimetre
+        y = -demi_hauteur
+    elif pos_perimetre <= largeur + hauteur:
+        # Côté droit (de bas en haut)
+        x = demi_largeur
+        y = -demi_hauteur + (pos_perimetre - largeur)
+    elif pos_perimetre <= 2 * largeur + hauteur:
+        # Côté haut (de droite à gauche)
+        x = demi_largeur - (pos_perimetre - largeur - hauteur)
+        y = demi_hauteur
+    else:
+        # Côté gauche (de haut en bas)
+        x = -demi_largeur
+        y = demi_hauteur - (pos_perimetre - 2 * largeur - hauteur)
+
+    return center[0] + x, center[1] + y
