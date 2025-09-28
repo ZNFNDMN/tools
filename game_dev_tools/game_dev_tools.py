@@ -263,6 +263,7 @@ class VisualHelper:
         # Variables servant à stocker les valeurs pour blit_grid_surfaces
         self.grid_rows = 0
         self.grid_lines = 0
+        self.grid_color = (255,255,255)
 
     def draw_grid(self, rows, lines):
         surface = self.surface
@@ -274,12 +275,12 @@ class VisualHelper:
         for row in range(1,rows):
             line_start = (row * row_width,0)
             line_end = (row * row_width,surf_height)
-            pygame.draw.line(surface, (255,255,255), line_start, line_end)
+            pygame.draw.line(surface, self.grid_color, line_start, line_end)
 
         for line in range(1, lines):
             line_start = (0, line * line_height)
             line_end = (surf_width, line * line_height)
-            pygame.draw.line(surface, (255, 255, 255), line_start, line_end )
+            pygame.draw.line(surface, self.grid_color, line_start, line_end )
 
     def draw_dots(self, rows, lines):
         surface = self.surface
@@ -415,20 +416,17 @@ class PygameSurfaceFactory:
                 sub_surf_index += 1
 
 class GameEntity(pygame.sprite.Sprite):
-    def __init__(self, target_surf,color, pos:pygame.Vector2, velocity:pygame.Vector2, speed, angle_increment):
-        # if isclass(central_shape):
-        #     print("Oubli de parenthéses à l'instanciation du central shape")
-        #     raise ValueError
+    def __init__(self):
 
         super().__init__()
-        self.target_surf=target_surf
+        self.target_surf:pygame.Surface=None
         self.game_entity_appearance=None
         self.movement_system=None
-        self.pos = pos
-        self.color=color
-        self.velocity=velocity
-        self.speed=speed
-        self.angle_increment=angle_increment# for polygon
+        self.pos = pygame.Vector2(0,0)
+        self.velocity=pygame.Vector2(0,0)
+        self.color=(255,255,255) # Blanc par défaut
+        self.speed=1
+        self.angle_increment=45# for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
         # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
@@ -601,12 +599,12 @@ class ProceduralEnemyFactory:
 ################## Animations
 
 class Animation:
-    def __init__(self, shapes:list):
-        self.shapes=shapes
+    def __init__(self):
+        pass
 
 class GameEntityAppearance(Animation):
-    def __init__(self, shapes: list, game_entity):
-        super().__init__(shapes)
+    def __init__(self, game_entity):
+        super().__init__()
         self.game_entity=game_entity
 
     def draw_game_entity_primary_shape(self):
@@ -652,8 +650,8 @@ class GameEntityAppearance(Animation):
         )
 
 class PlayerAppearence(GameEntityAppearance):
-    def __init__(self, shapes:list, player):
-        super().__init__(shapes, player)
+    def __init__(self, player):
+        super().__init__(player)
 
     def draw(self):
         game_entity = self.game_entity
