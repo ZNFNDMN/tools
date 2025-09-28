@@ -21,6 +21,7 @@ __all__ = [
     "Rectangle",
     "Polygon",
     "Ellipse",
+    "Line",
     "MovementSystem",
     "MouseMovementSystem",
     "Animation",
@@ -356,14 +357,33 @@ class VisualHelper:
                 surfaces[grid_surface_index].blit(surfaces[grid_surface_index], (x, y))
                 grid_surface_index += 1
 
-class GameText:
+class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone comme topleft
     def __init__(self, surface:pygame.Surface, font_size):
-        self.font = Font(None, font_size)
+        self.font = font.SysFont('Courier', font_size)
         self.surface = surface
+        self.color = (255,255,255)
+        self.text_list = [[]] # sert a stocker les chaines de textes à afficher dans une zone et leur largeur en pixel
+        self.text_max_width = 0 # sert a stocker la taille de plus grande chaine de caractere
+        self.text_pos_y = 0 # pour gérer l'espace entre les lignes dans les zones
 
-    def blit_text(self, text:str, pos,color=(255,255,255)):
-        txt = self.font.render(text,True,color)
+    def blit_text(self, text:str, pos):
+        txt = self.font.render(text,True,self.color)
         self.surface.blit(txt,pos)
+
+    def blit_text_in_zone(self, text:str, zone:tuple):  # zone peut etre surf.topleft par exemple
+        string_size = self.font.size(text)
+        txt = self.font.render(text,True,self.color)
+        self.text_list.append([txt, string_size])
+
+        self.text_max_width = max(self.text_list[1][1] for text in self.text_list)
+        self.text_pos_y = self.text_list[1][1][0]
+
+        for i in range(len(self.text_list)):
+            self.blit_text(self.text_list[0][i], (self.text_max_width+10,self.text_pos_y*i))
+
+
+
+
 
 # classe pour créer plusieurs surfaces dans une surface donné
 class PygameSurfaceFactory:
@@ -950,7 +970,7 @@ class Line(Shape):
         super().__init__(target_surf, start_pos)
         self.end_pos = end_pos
 
-    def draw(self,  start_pos, end_pos):
+    def draw(self):
         start_pos = self.pos
         pygame.draw.line(self.target_surf, self.color, start_pos, self.end_pos, self.border_width)
 
