@@ -43,6 +43,7 @@ from inspect import isclass
 from math import cos, sin, degrees,radians, pi, atan2
 import pygame
 from pygame import *
+import pygame.freetype
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -359,7 +360,11 @@ class VisualHelper:
 
 class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone comme topleft
     def __init__(self, surface:pygame.Surface, font_size, pos):
-        self.font = font.SysFont('Courier', font_size)
+        self.font_size = font_size
+        self.font = pygame.freetype.SysFont('Courier', self.font_size)
+        self.font.antialiased = True
+        #self.font.kerning = True  # Espacement automatique entre lettres
+
         self.surface = surface
         self.color = (255,255,255)
         self.text_list = [] # sert a stocker les chaines de textes à afficher dans une zone et leur largeur en pixel
@@ -368,16 +373,17 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         self.text_zone = None #
         self.text_pos = pos
 
-    def blit_text(self, text:str):
+    def add(self, text:str):
+        self.text_list.append(text)
+
+    def blit_text(self, text:str): # voir pour suppression
         txt = self.font.render(text,True,self.color)
-        self.surface.blit(txt,self.text_pos)
+        self.surface.blit(text,self.text_pos)
 
     def blit_text2(self):  # zone peut etre surf.topleft par exemple ou
         for i in range(len(self.text_list)):
-            txt = self.font.render(self.text_list[i],True,self.color)
-            self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
-        print(len(self.text_list))
-
+            self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size),self.text_list[i],self.color)
+            #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
 
 # classe pour créer plusieurs surfaces dans une surface donné
 class PygameSurfaceFactory:
@@ -918,7 +924,7 @@ class Circle(Shape):
         self.rect = None
 
     def draw(self):
-        pygame.draw.circle(
+        pygame.draw.aacircle(
             self.target_surf,
             self.color,
             self.pos,
