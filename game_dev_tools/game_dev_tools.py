@@ -368,9 +368,6 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         self.surface = surface
         self.color = (255,255,255)
         self.text_list = [] # sert a stocker les chaines de textes à afficher dans une zone et leur largeur en pixel
-        self.text_max_width = 0 # sert a stocker la taille de plus grande chaine de caractere
-        self.text_pos_y = 0 # pour gérer l'espace entre les lignes dans les zones
-        self.text_zone = None #
         self.text_pos = pos
 
     def add(self, text:str):
@@ -451,6 +448,9 @@ class GameEntity(pygame.sprite.Sprite):
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
         # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
         self.radius = 20
+        self.rect = Rect(self.pos, (self.radius * 2, self.radius * 2))
+        self.rect.center = self.pos
+
         self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
         # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
         #     self.width_height = (self.radius*2, self.radius*2)
@@ -458,6 +458,9 @@ class GameEntity(pygame.sprite.Sprite):
         # elif isinstance(self.central_shape,Rectangle):
         #     self.width_height = (40,40)
         #     self.rect = Rect(self.pos, self.width_height)
+
+    def update_rect(self):
+        self.rect.size = (self.radius * 2, self.radius * 2)
 
 class Player(GameEntity):
     # Couleur blanc par défaut
