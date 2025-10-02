@@ -359,18 +359,18 @@ class VisualHelper:
                 grid_surface_index += 1
 
 class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone comme topleft
-    def __init__(self, surface:pygame.Surface, font_size, pos):
+    def __init__(self, surface:pygame.Surface, pos, font_size, color=(255,255,255)):
         self.font_size = font_size
         self.font = pygame.freetype.SysFont('Courier', self.font_size)
+        self.color = color
         self.font.antialiased = True
-        #self.font.kerning = True  # Espacement automatique entre lettres
+        self.font.kerning = True  # Espacement automatique entre lettres
 
         self.surface = surface
-        self.color = (255,255,255)
-        #self.text_list = [] # sert a stocker les chaines de textes à afficher à une position
-        self.var_list = []
+        self.color = color
 
-        self.text_pos = pos
+        self.var_list = []
+        self.text_pos = pos # position initiale a mettre a jour dans update
 
     # def add(self, text:str):
     #     self.text_list.append(text)
