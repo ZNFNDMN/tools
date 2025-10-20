@@ -380,8 +380,10 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         self.surface.blit(text,self.text_pos)
 
     def blit_text2(self):  # zone peut etre surf.topleft par exemple ou
+        print(self.var_list)
         for i in range(len(self.var_list)):
-            self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size),self.var_list[i],self.color)
+            string = f"{self.var_list[i]}"
+            self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
             #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
 
 # classe pour créer plusieurs surfaces dans une surface donné
