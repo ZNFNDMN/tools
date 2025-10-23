@@ -26,6 +26,7 @@ __all__ = [
     "MouseMovementSystem",
     "Animation",
     "KeyboardMovementSystem",
+    "KeyboardMovementSystem2",
     "GameEntityAppearance",
     "PlayerAppearence",
     "PlayerAppearence2",
@@ -576,10 +577,6 @@ class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
         super().__init__(game_entity, surface)
 
-    def handle_input(self):
-        # si pygame.KEYDOWN
-        # Deplacement
-
     def move(self):
         game_entity =self.game_entity
         keys = pygame.key.get_pressed()
@@ -594,6 +591,31 @@ class KeyboardMovementSystem(MovementSystem):
         if down: game_entity.velocity.y = game_entity.speed
 
         self.keep_game_entity_on_screen()
+
+        game_entity.pos += game_entity.velocity
+
+# déplacement au clavier seulement si la touche de direction est enfoncé
+class KeyboardMovementSystem2(MovementSystem):
+    def __init__(self, game_entity, surface):
+        super().__init__(game_entity, surface)
+
+    def move(self):
+        game_entity =self.game_entity
+        keys = pygame.key.get_pressed()
+        left = keys[pygame.K_LEFT]
+        right = keys[pygame.K_RIGHT]
+        up = keys[pygame.K_UP]
+        down = keys[pygame.K_DOWN]
+
+        game_entity.velocity.x = 0
+        game_entity.velocity.y = 0
+
+        if left: game_entity.velocity.x = -game_entity.speed
+        if right: game_entity.velocity.x = game_entity.speed
+        if up: game_entity.velocity.y = -game_entity.speed
+        if down: game_entity.velocity.y = game_entity.speed
+
+        #self.keep_game_entity_on_screen()
 
         game_entity.pos += game_entity.velocity
 
