@@ -380,7 +380,6 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         self.surface.blit(text,self.text_pos)
 
     def blit_text2(self):  # zone peut etre surf.topleft par exemple ou
-        print(self.var_list)
         for i in range(len(self.var_list)):
             string = f"{self.var_list[i]}"
             self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
@@ -576,6 +575,10 @@ class MouseMovementSystem(MovementSystem):
 class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
         super().__init__(game_entity, surface)
+
+    def handle_input(self):
+        # si pygame.KEYDOWN
+        # Deplacement
 
     def move(self):
         game_entity =self.game_entity
