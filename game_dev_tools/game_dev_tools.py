@@ -46,6 +46,7 @@ import pygame
 from pygame import *
 import pygame.freetype
 
+
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
     # dx = self.player.position[0] - self.player2.position[0]
@@ -382,6 +383,7 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
 
     def blit_text2(self):  # zone peut etre surf.topleft par exemple ou
         for i in range(len(self.var_list)):
+            print(self.var_list[i])
             string = f"{self.var_list[i]}"
             self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
             #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
@@ -536,6 +538,11 @@ class MovementSystem:
             if collide_with_surface_right:  game_entity.velocity.x = -game_entity.speed
             if collide_with_surface_top:  game_entity.velocity.y = game_entity.speed
             if collide_with_surface_bottom: game_entity.velocity.y = -game_entity.speed
+        if isinstance(game_entity.movement_system, KeyboardMovementSystem2):
+            if collide_with_surface_left: game_entity.pos.x = game_entity.radius
+            if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.radius
+            if collide_with_surface_top: game_entity.pos.y = game_entity.radius
+            if collide_with_surface_bottom: game_entity.pos.y = surface_height - game_entity.radius
 
     def keep_rectangle_on_screen(self):
         game_entity = self.game_entity
@@ -551,6 +558,7 @@ class MovementSystem:
 
         mouse_movement_system = isinstance(game_entity.movement_system, MouseMovementSystem)
         keyboard_movement_system = isinstance(game_entity.movement_system, KeyboardMovementSystem)
+        keyboard_movement_system2 = isinstance(game_entity.movement_system, KeyboardMovementSystem2)
 
         if mouse_movement_system :
             if collide_with_surface_left: game_entity.pos.x = game_entity.width_height
@@ -562,6 +570,11 @@ class MovementSystem:
             if collide_with_surface_right: game_entity.velocity.x = -game_entity.speed
             if collide_with_surface_bottom: game_entity.velocity.y = -game_entity.speed
             if collide_with_surface_top: game_entity.velocity.y = game_entity.speed
+        if keyboard_movement_system2:
+            if collide_with_surface_left: game_entity.pos.x = game_entity.width_height
+            if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.width_height
+            if collide_with_surface_bottom: game_entity.pos.y = game_entity.width_height
+            if collide_with_surface_top:game_entity.pos.y = surface_height - game_entity.width_height
 
 class MouseMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
@@ -599,7 +612,7 @@ class KeyboardMovementSystem2(MovementSystem):
     def __init__(self, game_entity, surface):
         super().__init__(game_entity, surface)
 
-    def move(self):
+    def move(self, dt):
         game_entity =self.game_entity
         keys = pygame.key.get_pressed()
         left = keys[pygame.K_LEFT]
@@ -615,9 +628,9 @@ class KeyboardMovementSystem2(MovementSystem):
         if up: game_entity.velocity.y = -game_entity.speed
         if down: game_entity.velocity.y = game_entity.speed
 
-        #self.keep_game_entity_on_screen()
+        self.keep_game_entity_on_screen()
 
-        game_entity.pos += game_entity.velocity
+        game_entity.pos += game_entity.velocity * dt
 
 class ProceduralEnemyFactory:
     def __init__(self, surface):
