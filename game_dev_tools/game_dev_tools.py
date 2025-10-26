@@ -41,7 +41,7 @@ __all__ = [
 ]
 
 from inspect import isclass
-from math import cos, sin, degrees,radians, pi, atan2
+from math import cos, sin, degrees,radians, pi, atan2,sqrt
 import pygame
 from pygame import *
 import pygame.freetype
@@ -53,7 +53,7 @@ def circles_collide(circles: list):
     dx = circles[0].position[0] - circles[1].position[0]
     # dy = self.player.position[1] - self.player2.position[1]
     dy = circles[0].position[1] - circles[1].position[1]
-    distance = math.sqrt(dx ** 2 + dy ** 2)
+    distance = sqrt(dx ** 2 + dy ** 2)
 
     # if distance <= self.player.radius + self.player2.radius: return True
     if distance <= circles[0].radius + circles[1].radius:
@@ -69,27 +69,26 @@ def get_collision_point_of_circles(circles: list):
     if len(circles) < 2 or len(circles) > 2:
         raise ValueError("La liste doit contenir 2 élements")
 
-    angle1 = math.atan2(circles[1].position[1] - circles[0].position[1], circles[1].position[0] - circles[0].position[0])
+    angle1 = atan2(circles[1].position[1] - circles[0].position[1], circles[1].position[0] - circles[0].position[0])
     # opposite_angle = angle1 + math.pi # angle opposé au point de collision
 
-    collision_point_x = circles[0].position[0] + circles[0].radius * math.cos(angle1)
-    collision_point_y = circles[0].position[1] + circles[0].radius * math.sin(angle1)
+    collision_point_x = circles[0].position[0] + circles[0].radius * cos(angle1)
+    collision_point_y = circles[0].position[1] + circles[0].radius * sin(angle1)
 
     return pygame.Vector2(collision_point_x,collision_point_y)
 
 # Retourne le point opposé au point de collision entre 2 cercles (point_collision + pi)
 def get_collision_opposite_point_of_circles(circles: list):
-
         if not isinstance(circles, list):
             raise TypeError("L'argument doit être une liste")
         if len(circles) < 2 or len(circles) > 2:
             raise ValueError("La liste doit contenir 2 élements")
 
         angle3 = get_collision_point_angle(circles)
-        angle4 = angle3 + math.pi
+        angle4 = angle3 + pi
 
-        collision_opposite_point_x = circles[0].position[0] + circles[0].radius * math.cos(angle3)
-        collision_opposite_point_y = circles[0].position[1] + circles[0].radius * math.sin(angle3)
+        collision_opposite_point_x = circles[0].position[0] + circles[0].radius * cos(angle3)
+        collision_opposite_point_y = circles[0].position[1] + circles[0].radius * sin(angle3)
 
         collision_opposite_point = (collision_opposite_point_x,collision_opposite_point_y)
 
@@ -98,7 +97,7 @@ def get_collision_opposite_point_of_circles(circles: list):
 # Retourne l'angle d'un point de collision
 def get_collision_point_angle(circles: list):
 
-    collision_point_angle = math.atan2(circles[0].position[1] - circles[1].position[1],
+    collision_point_angle = atan2(circles[0].position[1] - circles[1].position[1],
                circles[0].position[0] - circles[1].position[0])
 
     return collision_point_angle
@@ -116,8 +115,8 @@ def change_circles_direction_after_collision(circles: list):
     #print (player_direction)
 
     #player.position.x =
-    player.velocity.x = math.cos(get_collision_opposite_point_of_circles([player,player2])) * player.speed_after_collision
-    player.velocity.y = math.sin(get_collision_opposite_point_of_circles([player, player2])) * player.speed_after_collision # #   #
+    player.velocity.x = cos(get_collision_opposite_point_of_circles([player,player2])) * player.speed_after_collision
+    player.velocity.y = sin(get_collision_opposite_point_of_circles([player, player2])) * player.speed_after_collision # #   #
 
 def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surface_height):
 
@@ -381,9 +380,8 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         txt = self.font.render(text,True,self.color)
         self.surface.blit(text,self.text_pos)
 
-    def blit_text2(self):  # zone peut etre surf.topleft par exemple ou
+    def blit_text2(self):
         for i in range(len(self.var_list)):
-            print(self.var_list[i])
             string = f"{self.var_list[i]}"
             self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
             #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
@@ -439,13 +437,13 @@ class PygameSurfaceFactory:
                 sub_surf_index += 1
 
 class GameEntity(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, surface, pos):
 
         super().__init__()
-        self.target_surf:pygame.Surface=None
+        self.target_surf:pygame.Surface=surface
         self.game_entity_appearance=None
         self.movement_system=None
-        self.pos = pygame.Vector2(0,0)
+        self.pos = pos
         self.velocity=pygame.Vector2(0,0)
         self.color=(255,255,255) # Blanc par défaut
         self.speed=1
@@ -472,15 +470,15 @@ class Player(GameEntity):
     # Couleur blanc par défaut
     def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
         # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
-        super().__init__(target_surf,color,pos,velocity,speed, angle_increment)
+        super().__init__(target_surf, pos)
         self.delta_time = delta_time
         self.border_width = border_width
 
     def handle_input(self):
         pass
 
-    def update(self):
-        self.movement_system.move()
+    def update(self, dt):
+        self.movement_system.move(dt)
 
     def draw(self):
         self.game_entity_appearance.draw()
@@ -580,7 +578,7 @@ class MouseMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
         super().__init__(game_entity, surface)
 
-    def move(self):
+    def move(self, dt):
         game_entity  =self.game_entity
         game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         game_entity.rect.center = game_entity.pos
@@ -630,7 +628,10 @@ class KeyboardMovementSystem2(MovementSystem):
 
         self.keep_game_entity_on_screen()
 
-        game_entity.pos += game_entity.velocity * dt
+        if game_entity.velocity.length() > 0:
+            game_entity.velocity = game_entity.velocity.normalize()
+
+        game_entity.pos += game_entity.velocity * game_entity.speed * dt
 
 class ProceduralEnemyFactory:
     def __init__(self, surface):
@@ -893,15 +894,16 @@ class PlayerAppearance7(GameEntityAppearance):
 
 class PlayerAppearance8(GameEntityAppearance):
     def __init__(self, shapes:list, player):
-        super().__init__(shapes, player)
+        super().__init__(shapes)
+        self.player = player
 
     def draw(self):
-        game_entity = self.game_entity
-        surface = game_entity.target_surf
-        color = game_entity.color
+        player = self.player
+        surface = player.target_surf
+        color = player.color
 
-        radius = game_entity.radius
-        pos =  game_entity.pos
+        radius = player.radius
+        pos =  player.pos
 
         Circle(surface, pos, radius).draw()
 
