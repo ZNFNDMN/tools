@@ -754,7 +754,7 @@ class ImpactSystem:
         #circle.draw()
 
 class StreakSystem:   # ou trail?
-    def __init__(self, game_entity):
+    def __init__(self, game_entity, trail_length):
         self.game_entity = game_entity
         self.surface = self.game_entity.target_surf
 
@@ -762,7 +762,10 @@ class StreakSystem:   # ou trail?
         self.entity_last_pos_list = []
         self.circle = None
 
+        # self.trail_appearance = TrailAppearance()
+
     def draw(self):
+        # self.trail_appearance draw()
         # stocker derniere positions
 
         if len(self.entity_last_pos_list) >= 50:
@@ -778,10 +781,9 @@ class StreakSystem:   # ou trail?
 
         self.entity_last_pos_list.append(self.game_entity.pos.copy())
 
-
 ################## Animations
 
-class ProceduralEnemyFactory:
+class ProceduralEnemyFactory: # convertir en movement_system
     def __init__(self, surface, enemies):
         self.surface= surface
         self.enemies = enemies
@@ -794,10 +796,11 @@ class ProceduralEnemyFactory:
         surf_width = self.surface.get_width()
         surf_height = self.surface.get_height()
 
-        time = pygame.time.get_ticks()/1000
-        time_with_speed = time * 10
+        time = pygame.time.get_ticks() / 1000
+        time_with_speed = time * 20
         number = 0
         angle_i = 360 // self.enemy_count
+
         for angle in range(0,360, angle_i):
             coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
                                               radians(time_with_speed+angle),
