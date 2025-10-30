@@ -741,7 +741,7 @@ class ImpactSystem:
         #circle.color = (0,255,255)
         #circle.draw()
 
-class StreakSystem:
+class StreakSystem:   # ou trail?
     def __init__(self, game_entity):
         self.game_entity = game_entity
         self.surface = self.game_entity.target_surf
@@ -750,28 +750,21 @@ class StreakSystem:
         self.entity_last_pos_list = []
         self.circle = None
 
-    def update(self):
+    def draw(self):
         # stocker derniere positions
-        print(len(self.entity_last_pos_list))
-        if len(self.entity_last_pos_list) >= 50:
+
+        if len(self.entity_last_pos_list) >= 100:
             self.entity_last_pos_list.pop(0)
 
         for i in range(len(self.entity_last_pos_list)):
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
             self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
-            #self.circle.color = (i % 255, i % 255, i % 255)
-            self.circle.color = (255, 255, 255)
+            # self.circle.color = (c255, i % 255, i % 255)
+            self.circle.color = (0, i % 255, i % 255)
             self.circle.border_width = 0
-            # print(len(circle_last_pos_list))
+            self.circle.draw()
 
         self.entity_last_pos_list.append(self.game_entity.pos.copy())
-
-        #circle_pos.x += circle_velocity.x * dt
-        #circle_pos.y += circle_velocity.y * dt
-
-    def draw(self):
-        if self.circle is not None:
-            self.circle.draw()
 
 
 ################## Animations
@@ -1112,7 +1105,7 @@ class Circle(Shape):
         self.rect = None
 
     def draw(self):
-        pygame.draw.aacircle(
+        pygame.draw.circle(
             self.target_surf,
             self.color,
             self.pos,
