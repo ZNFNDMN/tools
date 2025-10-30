@@ -39,7 +39,8 @@ __all__ = [
     "PlayerAppearance7",
     "PlayerAppearance8",
     "EntityAppearance",
-    "ProceduralEnemyFactory"
+    "ProceduralEnemyFactory",
+    "GameEntityFactory"
 ]
 
 from inspect import isclass
@@ -47,7 +48,6 @@ from math import cos, sin, degrees,radians, pi, atan2,sqrt
 import pygame
 from pygame import *
 import pygame.freetype
-
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -470,6 +470,18 @@ class GameEntity(pygame.sprite.Sprite):
     def update_rect(self):
         self.rect.size = (self.radius * 2, self.radius * 2)
 
+class GameEntityFactory():
+    def __init__(self, target_class, count:int, *args, **kwargs):
+        self.target_class = target_class
+        self.count = count
+        self.instances = []
+        self.args = args
+        self.kwargs = kwargs
+
+    def create_multiple_instances(self):
+        return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
+
+
 class Player(GameEntity):
     # Couleur blanc par défaut
     def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
@@ -753,14 +765,14 @@ class StreakSystem:   # ou trail?
     def draw(self):
         # stocker derniere positions
 
-        if len(self.entity_last_pos_list) >= 100:
+        if len(self.entity_last_pos_list) >= 50:
             self.entity_last_pos_list.pop(0)
 
         for i in range(len(self.entity_last_pos_list)):
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
             self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
             # self.circle.color = (c255, i % 255, i % 255)
-            self.circle.color = (0, i % 255, i % 255)
+            self.circle.color = (i % 255, i % 255, i % 255)
             self.circle.border_width = 0
             self.circle.draw()
 
@@ -770,8 +782,10 @@ class StreakSystem:   # ou trail?
 ################## Animations
 
 class ProceduralEnemyFactory:
-    def __init__(self, surface):
+    def __init__(self, surface, enemies):
         self.surface= surface
+        self.enemies = enemies
+        self.enemy_count = len(enemies)
 
     def rotate_around_surface(self):
         surface = self.surface
@@ -782,8 +796,8 @@ class ProceduralEnemyFactory:
 
         time = pygame.time.get_ticks()/1000
         time_with_speed = time * 10
-
-        angle_i = 90
+        number = 0
+        angle_i = 360 // self.enemy_count
         for angle in range(0,360, angle_i):
             coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
                                               radians(time_with_speed+angle),
@@ -791,11 +805,8 @@ class ProceduralEnemyFactory:
                                               surf_height
             )
 
-            enemy = Enemy(surface,pygame.Vector2(coordinate),Circle())
-            enemy.game_entity_appearence = PlayerAppearance4([], enemy)
-            enemy.size = 80
-            enemy.color = (100,100,100)
-            enemy.draw()
+            self.enemies[number].pos = pygame.Vector2(coordinate)
+            number += 1
             #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
 
 class Animation:
