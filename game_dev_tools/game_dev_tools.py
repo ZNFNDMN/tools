@@ -459,6 +459,7 @@ class GameEntity(pygame.sprite.Sprite):
         self.rect = Rect(self.pos, (self.radius * 2, self.radius * 2))
         self.rect.center = self.pos
 
+
         self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
         # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
         #     self.width_height = (self.radius*2, self.radius*2)
@@ -753,6 +754,110 @@ class ImpactSystem:
         #circle.color = (0,255,255)
         #circle.draw()
 
+class ImpactSystem2:
+    def __init__(self, game_entity):
+
+        self.game_entity = game_entity
+        self.surface = self.game_entity.target_surf
+        self.surface_width = self.surface.get_width()
+        self.surface_height= self.surface.get_height()
+
+        # gestion explosion sans lerp #################################################
+
+        self.explosion_radius1 = 0  # à réinitialiser dans la boucle de jeu aprés explosion
+        self.explosion_radius2 = 0  # à réinitialiser dans la boucle de jeu aprés explosion
+        self.explosion_radius3 = 0  # à réinitialiser dans la boucle de jeu aprés explosion
+        self.explosion_radius4 = 0  # à réinitialiser dans la boucle de jeu aprés explosion
+        self.top_collision_happened = False  # deviens vrai quand il y a collision, à réinitialiser aprés explosion
+        self.bottom_collision_happened = False  # deviens vrai quand il y a collision, à réinitialiser aprés explosio
+        self.left_collision_happened = False  # deviens vrai quand il y a collision, à réinitialiser aprés explosion
+        self.right_collision_happened = False  # deviens vrai quand il y a collision, à réinitialiser aprés explosion
+        self.explosion_pos1 = None
+        self.explosion_pos2 = None
+        self.explosion_pos3 = None
+        self.explosion_pos4 = None
+
+        self.explosion_end_radius1 = 200
+        self.explosion_end_radius2 = 200
+        self.explosion_end_radius3 = 200
+        self.explosion_end_radius4 = 200
+
+        self.explosion_speed = 25
+
+    def update(self):
+
+        if self.game_entity.pos.x - self.game_entity.radius <= 0:
+            self.left_collision_happened = True
+            self.explosion_pos3 = self.game_entity.pos
+            #circle_velocity.x += circle_speed
+        if self.game_entity.pos.x + self.game_entity.radius > self.surface_width:
+            self.right_collision_happened = True
+            self.explosion_pos4 = self.game_entity.pos
+            #circle_velocity.x += -circle_speed
+        if self.game_entity.pos.y - self.game_entity.radius < 0:
+            self.top_collision_happened = True
+            self.explosion_pos1 = self.game_entity.pos
+            #circle_velocity.y = circle_speed
+        if self.game_entity.pos.y + self.game_entity.radius > self.surface_height:
+            self.bottom_collision_happened = True
+            self.explosion_pos2 = self.game_entity.pos
+            #circle_velocity.y = -circle_speed
+
+
+    def draw(self):
+        if self.top_collision_happened and self.explosion_radius1 <= self.explosion_end_radius1:
+            self.explosion_radius1 += self.explosion_speed
+            #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1, 1)
+            top_impact_animation = Circle(self.game_entity.target_surf,self.game_entity.pos, self.explosion_radius1)
+            top_impact_animation.color = (0, 255, 255)
+            top_impact_animation.draw()
+            #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1 - 25, 1)
+
+        if self.bottom_collision_happened and self.explosion_radius2 <= self.explosion_end_radius2:
+            self.explosion_radius2 += self.explosion_speed
+            #pygame.draw.circle(surface, (255, 255, 0), explosion_pos2, explosion_radius2, 1)
+            bottom_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius2)
+            bottom_impact_animation.color = (255, 255, 0)
+            bottom_impact_animation.draw()
+            #pygame.draw.circle(surface, (255, 255, 0), explosion_pos2, explosion_radius2 - 25, 1)
+
+        if self.left_collision_happened and self.explosion_radius3 <= self.explosion_end_radius3:
+            self.explosion_radius3 += self.explosion_speed
+            #pygame.draw.circle(surface, (255, 0, 0), explosion_pos3, explosion_radius3, 1)
+            left_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius3)
+            left_impact_animation.color = (255, 0, 0)
+            left_impact_animation.draw()
+            #pygame.draw.circle(surface, (255, 0, 0), explosion_pos3, explosion_radius3 - 25, 1)
+
+        if self.right_collision_happened and self.explosion_radius4 <= self.explosion_end_radius4:
+            self.explosion_radius4 += self.explosion_speed
+            #pygame.draw.circle(surface, (0, 0, 255), explosion_pos4, explosion_radius4, 1)
+            right_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius4)
+            right_impact_animation.color = (255, 255, 255)
+            right_impact_animation.draw()
+            #pygame.draw.circle(surface, (0, 0, 255), explosion_pos4, explosion_radius4 - 25, 1)
+
+        if self.explosion_radius1 >= self.explosion_end_radius1:
+            self.explosion_radius1 = 0
+            self.top_collision_happened = False
+
+        if self.explosion_radius2 >= self.explosion_end_radius2:
+            self.explosion_radius2 = 0
+            self.bottom_collision_happened = False
+
+        if self.explosion_radius3 >= self.explosion_end_radius3:
+            self.explosion_radius3 = 0
+            self.left_collision_happened = False
+
+        if self.explosion_radius4 >= self.explosion_end_radius4:
+            self.explosion_radius4 = 0
+            self.right_collision_happened = False
+
+        #circle = pygame.draw.circle(surface, color_palette['primary'], circle_pos, radius)
+        #circle = Circle(self.surface, self.game_entity.pos, self.game_entity.radius)
+        #circle.color = (0,255,255)
+        #circle.draw()
+
 class StreakSystem:   # ou trail?
     def __init__(self, game_entity, trail_length):
         self.game_entity = game_entity
@@ -809,6 +914,7 @@ class ProceduralEnemyFactory: # convertir en movement_system
             )
 
             self.enemies[number].pos = pygame.Vector2(coordinate)
+            self.enemies[number].rect.center = pygame.Vector2(coordinate)
             number += 1
             #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
 
@@ -1131,7 +1237,7 @@ class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
 
-    def draw(self,target_surf:pygame.Surface,pos, width_height:tuple=(40,40)):
+    def draw(self,width_height:tuple=(40,40)):
         rect = pygame.Rect(self.pos, width_height)
         rect.center = self.pos
         pygame.draw.rect(self.target_surf, self.color, rect, self.border_width)
