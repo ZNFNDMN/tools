@@ -40,7 +40,10 @@ __all__ = [
     "PlayerAppearance8",
     "EntityAppearance",
     "ProceduralEnemyFactory",
-    "GameEntityFactory"
+    "GameEntityFactory",
+    "CollisionEffectSystem",
+    "CollisionEffectAnimation",
+    "CollisionEffectAnimation2"
 ]
 
 from inspect import isclass
@@ -51,13 +54,10 @@ import pygame.freetype
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
-    # dx = self.player.position[0] - self.player2.position[0]
     dx = circles[0].position[0] - circles[1].position[0]
-    # dy = self.player.position[1] - self.player2.position[1]
     dy = circles[0].position[1] - circles[1].position[1]
     distance = sqrt(dx ** 2 + dy ** 2)
 
-    # if distance <= self.player.radius + self.player2.radius: return True
     if distance <= circles[0].radius + circles[1].radius:
         return True
     else:
@@ -649,6 +649,39 @@ class KeyboardMovementSystem2(MovementSystem):
             game_entity.velocity = game_entity.velocity.normalize()
 
         game_entity.pos += game_entity.velocity * game_entity.speed * dt
+
+class CollisionEffectSystem:
+    def __init__(self, list):
+        self.list = {}
+
+    def add(self, name, effect):
+        self.list[name] = effect
+
+    def draw(self, name):
+        self.list[name].draw()
+
+class CollisionEffectAnimation:
+    def __init__(self):
+        pass
+
+    def draw(self):
+        print('collision effect animation draw')
+
+class CollisionEffectAnimation2:
+    def __init__(self, game_entity1, game_entity2):
+        self.game_entity1 = game_entity1
+        self.game_entity2 = game_entity2
+
+    def draw(self):
+        print('collision effect animation draw 2')
+        c = Circle(self.game_entity2.target_surf, self.game_entity2.pos, 300)
+        c.border_width = 4
+        c.draw()
+
+        c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, 150)
+        c2.color = (0,255,0)
+        c2.border_width = 0
+        c2.draw()
 
 class ImpactSystem:
     def __init__(self, game_entity):
