@@ -673,7 +673,6 @@ class CollisionEffectAnimation2:
         self.game_entity2 = game_entity2
 
     def draw(self):
-        print('collision effect animation draw 2')
         c = Circle(self.game_entity2.target_surf, self.game_entity2.pos, 300)
         c.border_width = 4
         c.draw()
@@ -953,7 +952,7 @@ class ProceduralEnemyFactory: # convertir en movement_system
 
 class Animation:
     def __init__(self):
-        pass
+        self.duration = 0
 
 class GameEntityAppearance(Animation):
     def __init__(self, game_entity):
