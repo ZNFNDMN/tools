@@ -482,7 +482,6 @@ class GameEntityFactory():
     def create_multiple_instances(self):
         return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
 
-
 class Player(GameEntity):
     # Couleur blanc par défaut
     def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
@@ -660,27 +659,7 @@ class CollisionEffectSystem:
     def draw(self, name):
         self.list[name].draw()
 
-class CollisionEffectAnimation:
-    def __init__(self):
-        pass
 
-    def draw(self):
-        print('collision effect animation draw')
-
-class CollisionEffectAnimation2:
-    def __init__(self, game_entity1, game_entity2):
-        self.game_entity1 = game_entity1
-        self.game_entity2 = game_entity2
-
-    def draw(self):
-        c = Circle(self.game_entity2.target_surf, self.game_entity2.pos, 300)
-        c.border_width = 4
-        c.draw()
-
-        c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, 150)
-        c2.color = (0,255,0)
-        c2.border_width = 0
-        c2.draw()
 
 class ImpactSystem:
     def __init__(self, game_entity):
@@ -951,10 +930,45 @@ class ProceduralEnemyFactory: # convertir en movement_system
             #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
 
 class Animation:
-    def __init__(self):
-        self.duration = 0
+    def __init__(self, game_entity1, game_entity2, duration, alive):
+        self.game_entity1 = game_entity1
+        self.game_entity2 = game_entity2
+        self.duration = duration # en secondes
+        self.alive = alive
+        self.elapsed_time = 0.0
 
-class GameEntityAppearance(Animation):
+    def update(self, dt):
+        self.elapsed_time += dt
+
+        if self.elapsed_time >= self.duration:
+            self.alive = False
+
+class CollisionEffectAnimation(Animation):
+    def __init__(self,game_entity1, game_entity2):
+        super().__init__(game_entity1, game_entity2, 5.0, True)
+
+    def draw(self):
+        print('collision effect animation draw')
+
+class CollisionEffectAnimation2(Animation):
+    def __init__(self, game_entity1, game_entity2):
+        super().__init__( game_entity1, game_entity2,5.0, True)
+
+        self.duration = 5.0
+
+    def draw(self):
+        time = pygame.time.get_ticks() / 1000
+
+        r_intensity = int((sin(time*5)+1) * 75)
+        g_intensity = int((sin(time*8)+1) * 127.5)
+        b_intensity = int((sin(time*10)+1) * 127.5)
+
+        c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
+        c2.color = (r_intensity,g_intensity,b_intensity)
+        c2.border_width = 0
+        c2.draw()
+
+class GameEntityAppearance():
     def __init__(self, game_entity):
         super().__init__()
         self.game_entity=game_entity
