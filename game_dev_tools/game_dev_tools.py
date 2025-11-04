@@ -51,6 +51,7 @@ from math import cos, sin, degrees,radians, pi, atan2,sqrt
 import pygame
 from pygame import *
 import pygame.freetype
+import copy
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -443,7 +444,7 @@ class GameEntity(pygame.sprite.Sprite):
 
         super().__init__()
         self.target_surf:pygame.Surface=surface
-        self.game_entity_appearance=None
+
         self.movement_system=None
         self.impact_system = None
         self.streak_system = None
@@ -467,6 +468,9 @@ class GameEntity(pygame.sprite.Sprite):
         # elif isinstance(self.central_shape,Rectangle):
         #     self.width_height = (40,40)
         #     self.rect = Rect(self.pos, self.width_height)
+        # gestion des apparences des entités ################
+
+        self.game_entity_appearance = None
 
     def update_rect(self):
         self.rect.size = (self.radius * 2, self.radius * 2)
@@ -490,14 +494,61 @@ class Player(GameEntity):
         self.delta_time = delta_time
         self.border_width = border_width
 
+        # gestion des apparences
+
+        self.appearances = {
+            'on_collision_with_enemy': AppearanceOnCollision1(),
+            'on_collision_with_window': AppearanceOnCollision2()
+        }
+
+        self.default_appearance = DefaultAppearance(self)
+        self.current_appearance = self.default_appearance
+
     def handle_input(self):
         pass
 
     def update(self, dt):
+        if not isinstance(self.current_appearance, DefaultAppearance):
+            if self.current_appearance.time_over:
+                self.current_appearance = self.default_apparence
+
+
         self.movement_system.move(dt)
+        self.current_appearance.update(dt)
 
     def draw(self):
-        self.game_entity_appearance.draw()
+        #self.game_entity_appearance.draw()
+        self.current_appearance.draw()
+
+class DefaultAppearance:
+    def __init__(self, player):
+        #super().__init__(shapes)
+        self.player = player
+        self.target_surf = self.player.target_surf
+        self.color = self.player.color
+        self.radius = 100
+
+        self.pos = self.player.pos
+
+        self.shape = Circle(self.target_surf, self.pos, self.radius)
+
+
+    def update(self, dt):
+        player = self.player
+        pos = player.pos
+
+        self.shape.pos = pos
+
+    def draw(self):
+        self.shape.draw()
+
+class AppearanceOnCollision1:
+    def __init__(self):
+        pass
+
+class AppearanceOnCollision2:
+    def __init__(self):
+        pass
 
 class Enemy(GameEntity):
     def __init__(self, target_surf, pos, central_shape, angle_increment=30, velocity=pygame.Vector2(0, 0), speed=1,
@@ -658,8 +709,6 @@ class CollisionEffectSystem:
 
     def draw(self, name):
         self.list[name].draw()
-
-
 
 class ImpactSystem:
     def __init__(self, game_entity):
@@ -930,12 +979,16 @@ class ProceduralEnemyFactory: # convertir en movement_system
             #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
 
 class Animation:
-    def __init__(self, game_entity1, game_entity2, duration, alive):
+    def __init__(self, game_entity1, game_entity2, duration):
         self.game_entity1 = game_entity1
         self.game_entity2 = game_entity2
         self.duration = duration # en secondes
-        self.alive = alive
+        self.alive = True
+        self.time = 0.0
         self.elapsed_time = 0.0
+
+    def init_time(self):
+        self.time = pygame.time.get_ticks() / 1000
 
     def update(self, dt):
         self.elapsed_time += dt
@@ -945,28 +998,36 @@ class Animation:
 
 class CollisionEffectAnimation(Animation):
     def __init__(self,game_entity1, game_entity2):
-        super().__init__(game_entity1, game_entity2, 5.0, True)
+        super().__init__(game_entity1, game_entity2, 2.0)
 
     def draw(self):
-        print('collision effect animation draw')
+        self.init_time()
 
 class CollisionEffectAnimation2(Animation):
     def __init__(self, game_entity1, game_entity2):
-        super().__init__( game_entity1, game_entity2,5.0, True)
+        super().__init__( game_entity1, game_entity2,5.0)
 
-        self.duration = 5.0
+    def update(self,dt):
+        super().update(dt)
+
+        self.init_time()
+
 
     def draw(self):
-        time = pygame.time.get_ticks() / 1000
+        r_intensity = int((sin(self.time * 5) + 1) * 75)
+        g_intensity = int((sin(self.time * 8) + 1) * 127.5)
+        b_intensity = int((sin(self.time * 10) + 1) * 127.5)
 
-        r_intensity = int((sin(time*5)+1) * 75)
-        g_intensity = int((sin(time*8)+1) * 127.5)
-        b_intensity = int((sin(time*10)+1) * 127.5)
+        c = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
+        c.color = (r_intensity, g_intensity, b_intensity)
+        c.border_width = 0
+        c.color = (r_intensity, g_intensity, b_intensity)
+        c.draw()
 
-        c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
-        c2.color = (r_intensity,g_intensity,b_intensity)
-        c2.border_width = 0
-        c2.draw()
+        #c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
+        #c2.color = (r_intensity,g_intensity,b_intensity)
+        #c2.border_width = 0
+        #c2.draw()
 
 class GameEntityAppearance():
     def __init__(self, game_entity):
@@ -1193,6 +1254,7 @@ class PlayerAppearance7(GameEntityAppearance):
             Line().draw(surface, color, start_pos, end_pos)
 
 class PlayerAppearance8(GameEntityAppearance):
+
     def __init__(self, shapes:list, player):
         super().__init__(shapes)
         self.player = player
