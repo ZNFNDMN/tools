@@ -509,6 +509,10 @@ class Player(GameEntity):
 
     def update(self, dt):
         if not isinstance(self.current_appearance, DefaultAppearance):
+            print(self.current_appearance)
+            print(self.current_appearance.elapsed_time)
+            print(self.current_appearance.time_over)
+            print('#######################################""')
             if self.current_appearance.time_over:
                 self.current_appearance = self.default_appearance
 
@@ -554,9 +558,11 @@ class AppearanceOnCollision1:
         self.shape.color = (255,0,0)
         self.duration = 2
         self.elapsed_time = 0.0
-        self.time_over = self.elapsed_time >= self.duration
+        self.time_over = None
 
     def update(self, dt):
+        print(f'time_over si {self.elapsed_time} >= {self.duration}')
+        self.time_over = self.elapsed_time >= self.duration
         player = self.player
         pos = player.pos
         self.shape.pos = pos
