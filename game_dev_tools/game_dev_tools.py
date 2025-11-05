@@ -497,7 +497,7 @@ class Player(GameEntity):
         # gestion des apparences
 
         self.appearances = {
-            'on_collision_with_enemy': AppearanceOnCollision1(),
+            'on_collision_with_player_projectile': AppearanceOnCollision1(self),
             'on_collision_with_window': AppearanceOnCollision2()
         }
 
@@ -510,9 +510,9 @@ class Player(GameEntity):
     def update(self, dt):
         if not isinstance(self.current_appearance, DefaultAppearance):
             if self.current_appearance.time_over:
-                self.current_appearance = self.default_apparence
+                self.current_appearance = self.default_appearance
 
-
+        #print(self.current_appearance)
         self.movement_system.move(dt)
         self.current_appearance.update(dt)
 
@@ -543,8 +543,29 @@ class DefaultAppearance:
         self.shape.draw()
 
 class AppearanceOnCollision1:
-    def __init__(self):
-        pass
+    def __init__(self,player):
+        self.player = player
+        self.target_surf = self.player.target_surf
+        self.radius = 100
+
+        self.pos = self.player.pos
+
+        self.shape = Circle(self.target_surf, self.pos, self.radius)
+        self.shape.color = (255,0,0)
+        self.duration = 2
+        self.elapsed_time = 0.0
+        self.time_over = self.elapsed_time >= self.duration
+
+    def update(self, dt):
+        player = self.player
+        pos = player.pos
+        self.shape.pos = pos
+        self.elapsed_time += dt
+        if self.time_over:
+            self.elapsed_time = 0.0
+
+    def draw(self):
+            self.shape.draw()
 
 class AppearanceOnCollision2:
     def __init__(self):
