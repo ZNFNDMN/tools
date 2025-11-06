@@ -43,7 +43,8 @@ __all__ = [
     "GameEntityFactory",
     "CollisionEffectSystem",
     "CollisionEffectAnimation",
-    "CollisionEffectAnimation2"
+    "CollisionEffectAnimation2",
+    "AppearanceOnCollision"
 ]
 
 from inspect import isclass
@@ -509,14 +510,9 @@ class Player(GameEntity):
 
     def update(self, dt):
         if not isinstance(self.current_appearance, DefaultAppearance):
-            print(self.current_appearance)
-            print(self.current_appearance.elapsed_time)
-            print(self.current_appearance.time_over)
-            print('#######################################""')
             if self.current_appearance.time_over:
                 self.current_appearance = self.default_appearance
 
-        #print(self.current_appearance)
         self.movement_system.move(dt)
         self.current_appearance.update(dt)
 
@@ -536,42 +532,45 @@ class DefaultAppearance:
 
         self.shape = Circle(self.target_surf, self.pos, self.radius)
 
-
     def update(self, dt):
         player = self.player
         pos = player.pos
-
         self.shape.pos = pos
 
     def draw(self):
         self.shape.draw()
 
-class AppearanceOnCollision1:
-    def __init__(self,player):
-        self.player = player
-        self.target_surf = self.player.target_surf
+class AppearanceOnCollision:
+    def __init__(self,entity):
+        self.entity = entity
+        self.target_surf = self.entity.target_surf
+        self.pos = self.entity.pos
         self.radius = 100
-
-        self.pos = self.player.pos
-
         self.shape = Circle(self.target_surf, self.pos, self.radius)
-        self.shape.color = (255,0,0)
+        self.shape.color = (255,255,255)
         self.duration = 2
         self.elapsed_time = 0.0
-        self.time_over = None
+        self.time_over = False
+
+    def reinit(self):
+        self.elapsed_time = 0.0
+        self.time_over = False
 
     def update(self, dt):
-        print(f'time_over si {self.elapsed_time} >= {self.duration}')
-        self.time_over = self.elapsed_time >= self.duration
-        player = self.player
-        pos = player.pos
+        entity = self.entity
+        pos = entity.pos
         self.shape.pos = pos
         self.elapsed_time += dt
-        if self.time_over:
-            self.elapsed_time = 0.0
+        if self.elapsed_time >= self.duration:
+            self.time_over = True
 
     def draw(self):
-            self.shape.draw()
+        self.shape.draw()
+
+class AppearanceOnCollision1(AppearanceOnCollision):
+    def __init__(self,player):
+        super().__init__(player)
+        self.shape.color = (255,0,0)
 
 class AppearanceOnCollision2:
     def __init__(self):
