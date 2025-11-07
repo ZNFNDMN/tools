@@ -447,8 +447,6 @@ class GameEntity(pygame.sprite.Sprite):
         self.target_surf:pygame.Surface=surface
 
         self.movement_system=None
-        self.impact_system = None
-        self.streak_system = None
         self.pos = pos
         self.velocity=pygame.Vector2(0,0)
         self.color=(255,255,255) # Blanc par défaut
@@ -457,10 +455,16 @@ class GameEntity(pygame.sprite.Sprite):
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
         # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
+
+        #gestion du rayon et du rect de collision
         self.radius = 20
         self.rect = Rect(self.pos, (self.radius * 2, self.radius * 2))
         self.rect.center = self.pos
 
+        self.default_appearance = None
+        self.current_appearance = None
+        self.impact_system = None
+        self.streak_system = None
 
         self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
         # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
@@ -470,6 +474,10 @@ class GameEntity(pygame.sprite.Sprite):
         #     self.width_height = (40,40)
         #     self.rect = Rect(self.pos, self.width_height)
         # gestion des apparences des entités ################
+        self.appearances = {
+            'on_collision_with_window' : '',
+            'on_collision_with' : ''
+        }
 
         self.game_entity_appearance = None
 
@@ -494,6 +502,12 @@ class Player(GameEntity):
         super().__init__(target_surf, pos)
         self.delta_time = delta_time
         self.border_width = border_width
+
+        # gestion du mouvement
+        self.movement_system = MouseMovementSystem(self, self.target_surf)
+
+        # gestion des dimensions (essentiel pour la gestion de collision)
+        self.radius = 50
 
         # gestion des apparences
 
@@ -526,16 +540,14 @@ class DefaultAppearance:
         self.player = player
         self.target_surf = self.player.target_surf
         self.color = self.player.color
-        self.radius = 100
-
+        self.radius = self.player.radius
         self.pos = self.player.pos
 
         self.shape = Circle(self.target_surf, self.pos, self.radius)
+        self.shape.color = self.color
 
     def update(self, dt):
-        player = self.player
-        pos = player.pos
-        self.shape.pos = pos
+        self.shape.pos = self.player.pos
 
     def draw(self):
         self.shape.draw()
@@ -545,7 +557,7 @@ class AppearanceOnCollision:
         self.entity = entity
         self.target_surf = self.entity.target_surf
         self.pos = self.entity.pos
-        self.radius = 100
+        self.radius = self.entity.radius
         self.shape = Circle(self.target_surf, self.pos, self.radius)
         self.shape.color = (255,255,255)
         self.duration = 2
@@ -557,9 +569,9 @@ class AppearanceOnCollision:
         self.time_over = False
 
     def update(self, dt):
-        entity = self.entity
-        pos = entity.pos
-        self.shape.pos = pos
+
+        self.shape.pos = self.entity.pos
+
         self.elapsed_time += dt
         if self.elapsed_time >= self.duration:
             self.time_over = True
@@ -948,7 +960,7 @@ class StreakSystem:   # ou trail?
     def __init__(self, game_entity, trail_length):
         self.game_entity = game_entity
         self.surface = self.game_entity.target_surf
-
+        self.trail_length = trail_length
         # gestion streak
         self.entity_last_pos_list = []
         self.circle = None
@@ -959,12 +971,12 @@ class StreakSystem:   # ou trail?
         # self.trail_appearance draw()
         # stocker derniere positions
 
-        if len(self.entity_last_pos_list) >= 50:
+        if len(self.entity_last_pos_list) >= self.trail_length:
             self.entity_last_pos_list.pop(0)
 
         for i in range(len(self.entity_last_pos_list)):
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
-            self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
+            self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius+i*0.5)
             # self.circle.color = (c255, i % 255, i % 255)
             self.circle.color = (i % 255, i % 255, i % 255)
             self.circle.border_width = 0
@@ -988,7 +1000,7 @@ class ProceduralEnemyFactory: # convertir en movement_system
         surf_height = self.surface.get_height()
 
         time = pygame.time.get_ticks() / 1000
-        time_with_speed = time * 20
+        time_with_speed = time * 10
         number = 0
         angle_i = 360 // self.enemy_count
 
@@ -1002,7 +1014,6 @@ class ProceduralEnemyFactory: # convertir en movement_system
             self.enemies[number].pos = pygame.Vector2(coordinate)
             self.enemies[number].rect.center = pygame.Vector2(coordinate)
             number += 1
-            #orbital_circle = pygame.draw.circle(surface, (255,255,255), coordinate, 20, 1)
 
 class Animation:
     def __init__(self, game_entity1, game_entity2, duration):
