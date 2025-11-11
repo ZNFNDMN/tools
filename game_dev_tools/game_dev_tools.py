@@ -442,14 +442,14 @@ class PygameSurfaceFactory:
 
 class GameEntity(pygame.sprite.Sprite):
     def __init__(self, surface, pos):
-
         super().__init__()
         self.target_surf:pygame.Surface=surface
-
         self.movement_system=None
+
         self.pos = pos
         self.velocity=pygame.Vector2(0,0)
         self.color=(255,255,255) # Blanc par défaut
+        self.border_width = 1
         self.speed=1
         self.angle_increment=45# for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
@@ -463,10 +463,13 @@ class GameEntity(pygame.sprite.Sprite):
 
         self.default_appearance = None
         self.current_appearance = None
-        self.impact_system = None
-        self.streak_system = None
+        self.impact_effect = None
+        self.streak = None
 
+        # doit etre update dans les apparences
+        # à récuperer dans chaque apparence pour initialisation
         self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
+
         # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
         #     self.width_height = (self.radius*2, self.radius*2)
         #     self.rect = Rect(self.pos, self.width_height)
@@ -479,12 +482,17 @@ class GameEntity(pygame.sprite.Sprite):
             'on_collision_with' : ''
         }
 
-        self.game_entity_appearance = None
+    def update(self, dt):
+        self.central_shape.pos = self.pos
 
-    def update_rect(self):
+
+    def draw(self):
+        self.central_shape.draw()
+
+    def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
 
-class GameEntityFactory():
+class GameEntityFactory:
     def __init__(self, target_class, count:int, *args, **kwargs):
         self.target_class = target_class
         self.count = count
@@ -502,13 +510,14 @@ class Player(GameEntity):
         super().__init__(target_surf, pos)
         self.delta_time = delta_time
         self.border_width = border_width
-
         # gestion du mouvement
         self.movement_system = MouseMovementSystem(self, self.target_surf)
 
         # gestion des dimensions (essentiel pour la gestion de collision)
         self.radius = 50
-
+        self.central_shape.radius = self.radius
+        self.central_shape.border_width = 0
+        self.streak = StreakSystem(self, 50)
         # gestion des apparences
 
         self.appearances = {
@@ -523,16 +532,22 @@ class Player(GameEntity):
         pass
 
     def update(self, dt):
+        self.central_shape.pos = self.pos
+        self.streak.update(dt)
+
         if not isinstance(self.current_appearance, DefaultAppearance):
             if self.current_appearance.time_over:
                 self.current_appearance = self.default_appearance
 
         self.movement_system.move(dt)
+
         self.current_appearance.update(dt)
 
     def draw(self):
         #self.game_entity_appearance.draw()
-        self.current_appearance.draw()
+        #self.current_appearance.draw()
+        self.streak.draw()
+        self.central_shape.draw()
 
 class DefaultAppearance:
     def __init__(self, player):
@@ -750,7 +765,6 @@ class CollisionEffectSystem:
 
 class ImpactSystem:
     def __init__(self, game_entity):
-
         self.game_entity = game_entity
         self.surface = self.game_entity.target_surf
         self.surface_width = self.surface.get_width()
@@ -778,8 +792,8 @@ class ImpactSystem:
 
         self.explosion_speed = 25
 
-    def update(self):
-
+    def update(self,dt):
+        print('impact update')
         if self.game_entity.pos.x - self.game_entity.radius <= 0:
             self.left_collision_happened = True
             self.explosion_pos3 = self.game_entity.pos
@@ -797,8 +811,8 @@ class ImpactSystem:
             self.explosion_pos2 = self.game_entity.pos
             #circle_velocity.y = -circle_speed
 
-
     def draw(self):
+        print('impact draw')
         if self.top_collision_happened and self.explosion_radius1 <= self.explosion_end_radius1:
             self.explosion_radius1 += self.explosion_speed
             #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1, 1)
@@ -964,26 +978,31 @@ class StreakSystem:   # ou trail?
         # gestion streak
         self.entity_last_pos_list = []
         self.circle = None
+        # liste pour stocker les cercles et dessiner
+        self.circles = []
 
-        # self.trail_appearance = TrailAppearance()
-
-    def draw(self):
-        # self.trail_appearance draw()
-        # stocker derniere positions
+    def update(self, dt):
 
         if len(self.entity_last_pos_list) >= self.trail_length:
             self.entity_last_pos_list.pop(0)
 
         for i in range(len(self.entity_last_pos_list)):
+            if len(self.circles) >= self.trail_length:
+                self.circles.pop(0)
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
-            self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius+i*0.5)
-            # self.circle.color = (c255, i % 255, i % 255)
+            self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
+            # self.circle.color = (255, i % 255, i % 255)
             self.circle.color = (i % 255, i % 255, i % 255)
             self.circle.border_width = 0
-            self.circle.draw()
-
+            self.circles.append(self.circle)
+        # ajoute la position en cours au tableau des dernieres positions
         self.entity_last_pos_list.append(self.game_entity.pos.copy())
 
+    def draw(self):
+        # prévoir dessin seulement pendant déplacement
+        # créer un cercle pour chacune des dernieres pos
+        for circle in self.circles:
+            circle.draw()
 ################## Animations
 
 class ProceduralEnemyFactory: # convertir en movement_system
@@ -1007,8 +1026,8 @@ class ProceduralEnemyFactory: # convertir en movement_system
         for angle in range(0,360, angle_i):
             coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
                                               radians(time_with_speed+angle),
-                                              surf_width,
-                                              surf_height
+                                              surf_width - 50,
+                                              surf_height - 50
             )
 
             self.enemies[number].pos = pygame.Vector2(coordinate)
@@ -1066,10 +1085,33 @@ class CollisionEffectAnimation2(Animation):
         #c2.border_width = 0
         #c2.draw()
 
-class GameEntityAppearance():
+class GameEntityAppearance:
     def __init__(self, game_entity):
-        super().__init__()
         self.game_entity=game_entity
+        self.target_surf = game_entity.target_surf
+        self.pos = self.game_entity.pos  # copie, utiliser self.game_entity.pos pour update
+        self.radius = self.game_entity.radius
+
+        self.central_shape = self.game_entity.central_shape
+        self.central_shape.border_width = 0
+        self.central_shape.color = game_entity.color
+        self.streak_appearance = None
+        self.impact_appearance = None
+
+    def update(self, dt):
+        self.central_shape.pos = self.game_entity.pos
+        if self.impact_appearance is not None:
+            self.impact_appearance.update(dt)
+        if self.streak_appearance is not None:
+            self.streak_appearance.update(dt)
+        # Afficher le rectangle de collision pour debugging
+        # pygame.draw.rect(surf, (0, 255, 255), game_entity.rect)
+
+    def draw(self):
+        if self.impact_appearance is not None:
+            self.impact_appearance.draw()
+        if self.streak_appearance is not None:
+            self.streak_appearance.draw()
 
     def draw_game_entity_primary_shape(self):
         game_entity = self.game_entity
@@ -1322,19 +1364,16 @@ class EntityAppearance(GameEntityAppearance):
         color = game_entity.color
         time = pygame.time.get_ticks()/1000
 
-
         center = pygame.Vector2(game_entity.pos)
 
         init_vector_i = pygame.Vector2(1,0)  # Vecteur de direction correspondant à l'axe x
         init_vector_j = pygame.Vector2(0,1)  # Vecteur de direction correspondant à l'axe y
-
 
         for i in range(-80, 81, 20):
             for j in range(-80,81,20):
                 pos = center + init_vector_i.rotate(degrees(time*0.1)) * i  + init_vector_j.rotate(degrees(time*0.1)) * j
                 #Line().draw(surface, color, center, (x, y))
                 Circle().draw(surface, (255, 0, 0), pos, 100 * cos(time), 1)
-
 
         Circle().draw(surface, (0,255,0), (center[0],center[1]), 10,1)
 
