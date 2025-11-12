@@ -485,7 +485,6 @@ class GameEntity(pygame.sprite.Sprite):
     def update(self, dt):
         self.central_shape.pos = self.pos
 
-
     def draw(self):
         self.central_shape.draw()
 
@@ -1026,8 +1025,8 @@ class ProceduralEnemyFactory: # convertir en movement_system
         for angle in range(0,360, angle_i):
             coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
                                               radians(time_with_speed+angle),
-                                              surf_width - 50,
-                                              surf_height - 50
+                                              surf_width,
+                                              surf_height
             )
 
             self.enemies[number].pos = pygame.Vector2(coordinate)
