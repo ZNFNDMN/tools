@@ -482,6 +482,23 @@ class GameEntity(pygame.sprite.Sprite):
             'on_collision_with' : ''
         }
 
+    # initialiser les attributs des composants d'apparences a partir d'un dict
+    # si attribut imbriqué -> split en liste -> récupérer dernier élément
+    def init_entity_appearance_component(self, components_group:list, attrs_to_init:dict):
+        for component in components_group:
+            for attr, value in attrs_to_init.items():
+                if '.' in attr:
+                    temp_obj = component
+                    attribute_names = attr.split('.')
+                    for attribute in attribute_names[:-1]:
+                        temp_obj = getattr(temp_obj, attribute)
+                    setattr(temp_obj, attribute_names[-1], value)
+                else:
+                    setattr(component, attr, value)
+
+    # meme principe que le précédent
+    def update_entity_appearance_component(self, components_group:list, attrs_to_update:dict):
+        pass
     def update(self, dt):
         self.central_shape.pos = self.pos
 
@@ -490,6 +507,8 @@ class GameEntity(pygame.sprite.Sprite):
 
     def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
+
+
 
 class GameEntityFactory:
     def __init__(self, target_class, count:int, *args, **kwargs):
