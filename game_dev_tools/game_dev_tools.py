@@ -486,19 +486,32 @@ class GameEntity(pygame.sprite.Sprite):
     # si attribut imbriqué -> split en liste -> récupérer dernier élément
     def init_entity_appearance_component(self, components_group:list, attrs_to_init:dict):
         for component in components_group:
-            for attr, value in attrs_to_init.items():
-                if '.' in attr:
-                    temp_obj = component
-                    attribute_names = attr.split('.')
-                    for attribute in attribute_names[:-1]:
-                        temp_obj = getattr(temp_obj, attribute)
-                    setattr(temp_obj, attribute_names[-1], value)
-                else:
-                    setattr(component, attr, value)
+            self.init_object(component, attrs_to_init)
+
+    def init_object(self, object, attrs_to_init):
+        for attr, value in attrs_to_init.items():
+            if '.' in attr:
+                temp_obj = object
+                attribute_names = attr.split('.')
+                for attribute in attribute_names[:-1]:
+                    temp_obj = getattr(temp_obj, attribute)
+                setattr(temp_obj, attribute_names[-1], value)
+            else:
+                setattr(object, attr, value)
 
     # meme principe que le précédent
     def update_entity_appearance_component(self, components_group:list, attrs_to_update:dict):
         pass
+
+    def update_orbital_objects(self, components_group:list, attrs_to_update:dict):
+        angle_increment = 2 * pi / len(components_group)
+        time = pygame.time.get_ticks() / 1000
+
+        for index, component in enumerate(components_group):
+            angle = angle_increment * index
+            self.init_object(component, attrs_to_update)
+
+
     def update(self, dt):
         self.central_shape.pos = self.pos
 
@@ -507,8 +520,6 @@ class GameEntity(pygame.sprite.Sprite):
 
     def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
-
-
 
 class GameEntityFactory:
     def __init__(self, target_class, count:int, *args, **kwargs):
