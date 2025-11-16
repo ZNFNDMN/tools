@@ -451,7 +451,7 @@ class GameEntity(pygame.sprite.Sprite):
         self.color=(255,255,255) # Blanc par défaut
         self.border_width = 1
         self.speed=1
-        self.angle_increment=45# for polygon
+        #self.angle_increment=45 # for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
         # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
