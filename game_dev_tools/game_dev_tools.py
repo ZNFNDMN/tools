@@ -443,21 +443,22 @@ class PygameSurfaceFactory:
 class GameEntity(pygame.sprite.Sprite):
     def __init__(self, surface, pos):
         super().__init__()
+
         self.target_surf:pygame.Surface=surface
         self.movement_system=None
 
         self.pos = pos
         self.velocity=pygame.Vector2(0,0)
         self.color=(255,255,255) # Blanc par défaut
-        self.border_width = 1
-        self.speed=1
+        self.border_width = 0
+        self.speed=0
         #self.angle_increment=45 # for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
         # si la forme centrale est un rectangle, la taille est défini par le binome (largeur, hauteur)
 
         #gestion du rayon et du rect de collision
-        self.radius = 20
+        self.radius = 0
         self.rect = Rect(self.pos, (self.radius * 2, self.radius * 2))
         self.rect.center = self.pos
 
@@ -468,7 +469,6 @@ class GameEntity(pygame.sprite.Sprite):
 
         # doit etre update dans les apparences
         # à récuperer dans chaque apparence pour initialisation
-        self.central_shape=Circle(self.target_surf, self.pos, self.radius) #Cercle par défaut
 
         # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
         #     self.width_height = (self.radius*2, self.radius*2)
@@ -482,9 +482,13 @@ class GameEntity(pygame.sprite.Sprite):
             'on_collision_with' : ''
         }
 
+    def init_appearance(self):
+        for key in self.appearance:
+            self.init_appearance_component(self.appearance[key], self.appearance_config[key])
+
     # initialiser les attributs des composants d'apparences a partir d'un dict
     # si attribut imbriqué -> split en liste -> récupérer dernier élément
-    def init_entity_appearance_component(self, components_group:list, attrs_to_init:dict):
+    def init_appearance_component(self, components_group:list, attrs_to_init:dict):
         for component in components_group:
             self.init_object(component, attrs_to_init)
 
@@ -511,16 +515,19 @@ class GameEntity(pygame.sprite.Sprite):
             angle = angle_increment * index
             self.init_object(component, attrs_to_update)
 
-
     def update(self, dt):
-        self.central_shape.pos = self.pos
+        pass
+        #self.central_shape.pos = self.pos
 
     def draw(self):
-        self.central_shape.draw()
+        pass
+        #self.central_shape.draw()
 
     def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
 
+################################################
+##################################################
 class GameEntityFactory:
     def __init__(self, target_class, count:int, *args, **kwargs):
         self.target_class = target_class
@@ -544,6 +551,7 @@ class Player(GameEntity):
 
         # gestion des dimensions (essentiel pour la gestion de collision)
         self.radius = 50
+        self.central_shape = Circle(self.target_surf, self.pos, self.radius)
         self.central_shape.radius = self.radius
         self.central_shape.border_width = 0
         self.streak = StreakSystem(self, 50)
@@ -594,7 +602,8 @@ class DefaultAppearance:
         self.shape.pos = self.player.pos
 
     def draw(self):
-        self.shape.draw()
+        pass
+        #self.shape.draw()
 
 class AppearanceOnCollision:
     def __init__(self,entity):
@@ -841,7 +850,6 @@ class ImpactSystem:
             #circle_velocity.y = -circle_speed
 
     def draw(self):
-        print('impact draw')
         if self.top_collision_happened and self.explosion_radius1 <= self.explosion_end_radius1:
             self.explosion_radius1 += self.explosion_speed
             #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1, 1)
@@ -1120,15 +1128,11 @@ class GameEntityAppearance:
         self.target_surf = game_entity.target_surf
         self.pos = self.game_entity.pos  # copie, utiliser self.game_entity.pos pour update
         self.radius = self.game_entity.radius
-
-        self.central_shape = self.game_entity.central_shape
-        self.central_shape.border_width = 0
-        self.central_shape.color = game_entity.color
         self.streak_appearance = None
         self.impact_appearance = None
 
     def update(self, dt):
-        self.central_shape.pos = self.game_entity.pos
+        #self.central_shape.pos = self.game_entity.pos
         if self.impact_appearance is not None:
             self.impact_appearance.update(dt)
         if self.streak_appearance is not None:
@@ -1485,8 +1489,8 @@ class Line(Shape):
         self.end_pos = end_pos
 
     def draw(self):
-        start_pos = self.pos
-        pygame.draw.line(self.target_surf, self.color, start_pos, self.end_pos, self.border_width)
+        #start_pos = self.pos
+        pygame.draw.line(self.target_surf, self.color, self.start_pos, self.end_pos, self.border_width)
 
 class ProceduralAnimation:
     def __init__(self,entity):
