@@ -1048,7 +1048,18 @@ class ProceduralEnemyFactory: # convertir en movement_system
         self.enemies = enemies
         self.enemy_count = len(enemies)
 
+        self.angles = []
+        self.angle_increment = pi * 2 / self.enemy_count
+
+        for i in range(self.enemy_count):
+            self.angles.append(self.angle_increment * i)
+
+        # for angle in self.angles:
+        #     print(degrees(angle))
+
     def rotate_around_surface(self):
+        #self.enemy_count = len(self.enemies)
+
         surface = self.surface
         surf_center_x = self.surface.get_rect().centerx
         surf_center_y = self.surface.get_rect().centery
@@ -1056,20 +1067,33 @@ class ProceduralEnemyFactory: # convertir en movement_system
         surf_height = self.surface.get_height()
 
         time = pygame.time.get_ticks() / 1000
-        time_with_speed = time * 10
+        time_with_speed = time * 0.1
         number = 0
-        angle_i = 360 // self.enemy_count
 
-        for angle in range(0,360, angle_i):
+        #angle_increment = pi*2 / self.enemy_count
+
+        for i, angle in enumerate(self.angles):
+            #angle = self.angle_increment * i
+
             coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
-                                              radians(time_with_speed+angle),
-                                              surf_width,
-                                              surf_height
-            )
+                                            time_with_speed + angle,
+                                            surf_width-120,
+                                            surf_height-120
+                                            )
 
-            self.enemies[number].pos = pygame.Vector2(coordinate)
-            self.enemies[number].rect.center = pygame.Vector2(coordinate)
-            number += 1
+            self.enemies[i].pos = pygame.Vector2(coordinate)
+            self.enemies[i].rect.center = pygame.Vector2(coordinate)
+
+        # for angle in range(0,360, angle_i):
+        #     coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
+        #                                       radians(time_with_speed+angle),
+        #                                       surf_width,
+        #                                       surf_height
+        #     )
+        #
+        #     self.enemies[number].pos = pygame.Vector2(coordinate)
+        #     self.enemies[number].rect.center = pygame.Vector2(coordinate)
+        #     number += 1
 
 class Animation:
     def __init__(self, game_entity1, game_entity2, duration):
@@ -1430,6 +1454,7 @@ class EntityAppearance(GameEntityAppearance):
 class Shape:
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
         self.pos = pos
+        self.start_pos = None # pour les lignes
         self.color = (255,255,255)
         self.border_width = 1
         self.target_surf = target_surf
@@ -1486,6 +1511,7 @@ class Ellipse(Shape):
 class Line(Shape):
     def __init__(self, target_surf,start_pos:pygame.Vector2,end_pos:pygame.Vector2):
         super().__init__(target_surf, start_pos)
+        self.start_pos = start_pos
         self.end_pos = end_pos
 
     def draw(self):
