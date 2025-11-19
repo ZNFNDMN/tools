@@ -481,10 +481,15 @@ class GameEntity(pygame.sprite.Sprite):
             'on_collision_with_window' : '',
             'on_collision_with' : ''
         }
+        # créer des attributs à partir des entrées du dict defaults
+
+    def init_defaults_values(self):
+        for key, value in self.defaults.items():
+            self.__dict__[key] = value
 
     def init_appearance(self):
-        for key in self.appearance:
-            self.init_appearance_component(self.appearance[key], self.appearance_config[key])
+        for key in self.appearance_components:
+            self.init_appearance_component(self.appearance_components[key], self.appearance_config[key])
 
     # initialiser les attributs des composants d'apparences a partir d'un dict
     # si attribut imbriqué -> split en liste -> récupérer dernier élément
@@ -503,9 +508,9 @@ class GameEntity(pygame.sprite.Sprite):
             else:
                 setattr(object, attr, value)
 
-    # meme principe que le précédent
-    def update_entity_appearance_component(self, components_group:list, attrs_to_update:dict):
-        pass
+    def update_entity_appearance_component(self, keys:list, attrs_to_update:dict):
+        for key in keys:
+            self.init_appearance_component(self.appearance_components[key], attrs_to_update)
 
     def update_orbital_objects(self, components_group:list, attrs_to_update:dict):
         angle_increment = 2 * pi / len(components_group)
@@ -522,6 +527,11 @@ class GameEntity(pygame.sprite.Sprite):
     def draw(self):
         pass
         #self.central_shape.draw()
+
+    def draw_appearance_components(self):
+        for component in self.appearance_components:
+            for shape in self.appearance_components[component]:
+                shape.draw()
 
     def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
