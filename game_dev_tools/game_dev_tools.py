@@ -24,6 +24,7 @@ __all__ = [
     "Line",
     "MovementSystem",
     "MouseMovementSystem",
+    "DragAndDrop",
     "Animation",
     "KeyboardMovementSystem",
     "KeyboardMovementSystem2",
@@ -446,7 +447,6 @@ class GameEntity(pygame.sprite.Sprite):
 
         self.target_surf:pygame.Surface=surface
         self.movement_system=None
-
         self.pos = pos
         self.velocity=pygame.Vector2(0,0)
         self.color=(255,255,255) # Blanc par défaut
@@ -462,43 +462,58 @@ class GameEntity(pygame.sprite.Sprite):
         self.rect = Rect(self.pos, (self.radius * 2, self.radius * 2))
         self.rect.center = self.pos
 
-        self.default_appearance = None
-        self.current_appearance = None
         self.impact_effect = None
         self.streak = None
+
+        # valeurs par défaut qu'il faut réinitialiser au cours du programme
+        self.defaults = {}
+
+        #####################################################################################
+        # appeler init_defaults_values pour créer les attributs à partir des valeurs par défaut
+        #####################################################################################
+
+        # dict qui rassemble toutes les formes composant l'entité
+        # dict de liste pour parcourir plus facilement
+        self.appearance_components = {}
+
+        # dict de config des composants d'apparence
+        self.appearance_config = {}
+
+        #####################################################################################
+        # appeler init_appearance pour initialiser les composants d'apparence
+        # à partir de la config
+        #####################################################################################
+
+        # prévoir HealthSystem
+        self.hp = 0
 
         # doit etre update dans les apparences
         # à récuperer dans chaque apparence pour initialisation
 
-        # if isinstance(self.central_shape,Circle) or isinstance(self.central_shape, Polygon):
-        #     self.width_height = (self.radius*2, self.radius*2)
-        #     self.rect = Rect(self.pos, self.width_height)
-        # elif isinstance(self.central_shape,Rectangle):
-        #     self.width_height = (40,40)
-        #     self.rect = Rect(self.pos, self.width_height)
-        # gestion des apparences des entités ################
-        self.appearances = {
-            'on_collision_with_window' : '',
-            'on_collision_with' : ''
-        }
-        # créer des attributs à partir des entrées du dict defaults
+        # dict des apparences des entités ################
+        # exemples : 'on_collision_with'
+        self.appearances = {}
 
+    # créer des attributs à partir des entrées du dict defaults
     def init_defaults_values(self):
         for key, value in self.defaults.items():
-            self.__dict__[key] = value
+            # ça c'est caca
+            #self.__dict__[key] = value
+            setattr(self, key, value)
 
     def init_appearance(self):
         for key in self.appearance_components:
             self.init_appearance_component(self.appearance_components[key], self.appearance_config[key])
 
     # initialiser les attributs des composants d'apparences a partir d'un dict
-    # si attribut imbriqué -> split en liste -> récupérer dernier élément
     def init_appearance_component(self, components_group:list, attrs_to_init:dict):
         for component in components_group:
             self.init_object(component, attrs_to_init)
 
+    # initialiser les attributs d'un objet à partir d'un dict
     def init_object(self, object, attrs_to_init):
         for attr, value in attrs_to_init.items():
+            # si attribut imbriqué -> split en liste -> récupérer dernier élément
             if '.' in attr:
                 temp_obj = object
                 attribute_names = attr.split('.')
@@ -524,9 +539,16 @@ class GameEntity(pygame.sprite.Sprite):
         pass
         #self.central_shape.pos = self.pos
 
+    def reinitialize_to_defaults_values(self):
+        # si self.appearance n'est pas une instance de l'apparence par défaut :
+        # si le délai de l'apparence est dépassé
+        # on réinitialise les valeurs par défauts
+        if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
+            if self.appearance.time_over:
+                self.init_defaults_values()
+
     def draw(self):
-        pass
-        #self.central_shape.draw()
+        self.draw_appearance_components()
 
     def draw_appearance_components(self):
         for component in self.appearance_components:
@@ -675,14 +697,16 @@ class MovementSystem:
     def keep_game_entity_on_screen(self):
         game_entity = self.game_entity
 
-        circle = isinstance(game_entity.central_shape, Circle)
-        rectangle = isinstance(game_entity.central_shape, Rectangle)
-        polygon = isinstance(game_entity.central_shape, Polygon)
+        self.keep_circle_on_screen()
 
-        if circle or polygon:
-            self.keep_circle_on_screen()
-        if rectangle:
-            self.keep_rectangle_on_screen()
+        # circle = isinstance(game_entity.central_shape, Circle)
+        # rectangle = isinstance(game_entity.central_shape, Rectangle)
+        # polygon = isinstance(game_entity.central_shape, Polygon)
+        #
+        # if circle or polygon:
+        #     #self.keep_circle_on_screen()
+        # if rectangle:
+        #     self.keep_rectangle_on_screen()
 
     def keep_circle_on_screen(self):
         game_entity = self.game_entity
@@ -694,7 +718,7 @@ class MovementSystem:
         collide_with_surface_top = game_entity.pos.y - game_entity.radius < 0
         collide_with_surface_bottom = game_entity.pos.y + game_entity.radius > surface_height
 
-        if isinstance(game_entity.movement_system, MouseMovementSystem):
+        if isinstance(game_entity.movement_system, MouseMovementSystem) or isinstance(game_entity.movement_system, DragAndDrop):
             if collide_with_surface_left: game_entity.pos.x = game_entity.radius
             if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.radius
             if collide_with_surface_top: game_entity.pos.y = game_entity.radius
@@ -748,6 +772,16 @@ class MouseMovementSystem(MovementSystem):
 
     def move(self, dt):
         game_entity  =self.game_entity
+        game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+        game_entity.rect.center = game_entity.pos
+        self.keep_game_entity_on_screen()
+
+class DragAndDrop(MovementSystem):
+    def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
+        super().__init__(game_entity, surface)
+
+    def move(self, dt):
+        game_entity = self.game_entity
         game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         game_entity.rect.center = game_entity.pos
         self.keep_game_entity_on_screen()
