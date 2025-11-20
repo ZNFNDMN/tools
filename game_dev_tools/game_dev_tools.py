@@ -779,12 +779,23 @@ class MouseMovementSystem(MovementSystem):
 class DragAndDrop(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
         super().__init__(game_entity, surface)
+        self.dragging =  False
+
+    def handle_events(self, event):
+        if event.type == MOUSEBUTTONDOWN:
+            if self.game_entity.rect.collidepoint(event.pos):
+                self.dragging = True
+        if event.type == MOUSEBUTTONUP:
+            if self.game_entity.rect.collidepoint(event.pos):
+                self.dragging = False
 
     def move(self, dt):
-        game_entity = self.game_entity
-        game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-        game_entity.rect.center = game_entity.pos
-        self.keep_game_entity_on_screen()
+        if self.dragging:
+            game_entity = self.game_entity
+            game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            game_entity.rect.center = game_entity.pos
+            self.keep_game_entity_on_screen()
+
 
 class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
