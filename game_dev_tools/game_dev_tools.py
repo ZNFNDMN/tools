@@ -2,6 +2,8 @@ __all__ = [
     "circles_collide",
     "get_collision_point_of_circles",
     "get_collision_point_angle",
+    "get_midpoint",
+    "get_right_angle_point",
     "draw_rect",
     "draw_grid",
     "draw_dots",
@@ -106,6 +108,12 @@ def get_collision_point_angle(circles: list):
                circles[0].position[0] - circles[1].position[0])
 
     return collision_point_angle
+
+def get_midpoint(point1, point2):
+    return pygame.Vector2((point1.x+point2.x) / 2, (point1.y+point2.y) / 2)
+
+def get_right_angle_point(point1, point2):
+    return pygame.Vector2((point1.x, point2.y))
 
 # la logique est correcte mais ne fonctionne pas pour l'instant
 def change_circles_direction_after_collision(circles: list):
@@ -377,7 +385,6 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
 
         self.var_list = []
         self.text_pos = pos # position initiale a mettre a jour dans update
-
     # def add(self, text:str):
     #     self.text_list.append(text)
 
@@ -385,7 +392,7 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
         txt = self.font.render(text,True,self.color)
         self.surface.blit(text,self.text_pos)
 
-    def blit_text2(self):
+    def draw(self):
         for i in range(len(self.var_list)):
             string = f"{self.var_list[i]}"
             self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
@@ -795,7 +802,6 @@ class DragAndDrop(MovementSystem):
             game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
             game_entity.rect.center = game_entity.pos
             self.keep_game_entity_on_screen()
-
 
 class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
