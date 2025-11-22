@@ -771,14 +771,14 @@ class MovementSystem:
             if collide_with_surface_left: game_entity.pos.x = game_entity.width_height
             if collide_with_surface_right: game_entity.pos.x = surface_width - game_entity.width_height
             if collide_with_surface_bottom: game_entity.pos.y = game_entity.width_height
-            if collide_with_surface_top:game_entity.pos.y = surface_height - game_entity.width_height
+            if collide_with_surface_top:game_entity.pos.y = surface_height - game_entity.width_heigh
 
 class MouseMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
         super().__init__(game_entity, surface)
 
     def move(self, dt):
-        game_entity  =self.game_entity
+        game_entity  = self.game_entity
         game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         game_entity.rect.center = game_entity.pos
         self.keep_game_entity_on_screen()
@@ -851,6 +851,7 @@ class KeyboardMovementSystem2(MovementSystem):
             game_entity.velocity = game_entity.velocity.normalize()
 
         game_entity.pos += game_entity.velocity * game_entity.speed * dt
+        game_entity.rect.center = game_entity.pos
 
 class CollisionEffectSystem:
     def __init__(self, list):
@@ -1513,14 +1514,16 @@ class EntityAppearance(GameEntityAppearance):
         #         Circle().draw(surface, (255, 0, 0), (x,y),3)
 
 class Shape:
+    __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
         self.pos = pos
-        self.start_pos = None # pour les lignes
         self.color = (255,255,255)
         self.border_width = 1
         self.target_surf = target_surf
 
 class Circle(Shape):
+    __slots__ = ['radius', 'rect']
+
     def __init__(self, target_surf, pos, radius):
         super().__init__(target_surf, pos)
         # 2 attributs nécessaires pour pouvoir gérer les collisions avec pygame.sprite.circle_collide
