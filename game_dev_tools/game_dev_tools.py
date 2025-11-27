@@ -807,7 +807,6 @@ class DragAndDrop(MovementSystem):
 class MoveWhereMouseIsClicked(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
         super().__init__(game_entity, surface)
-        self.initial_pos =  self.game_entity.pos
         self.new_pos = pygame.Vector2(0,0)
         self.event_pos = pygame.Vector2(0,0)
         self.is_clicked = False
@@ -815,31 +814,14 @@ class MoveWhereMouseIsClicked(MovementSystem):
     def handle_events(self, event):
         if event.type == MOUSEBUTTONDOWN:
             self.is_clicked = True
-            #self.last_click_pos = pygame.Vector2(event.pos)
             self.new_pos.x = event.pos[0]
             self.new_pos.y = event.pos[1]
-            print('clic')
-            print(f'nouvelle position : {self.new_pos}')
 
     def move(self, dt):
-        # game_entity = self.game_entity
-        # print(f'si {self.game_entity.pos} == {self.event_pos}')
-
         if self.is_clicked:
-            time  = pygame.time.get_ticks() / 1000
-
-            self.game_entity.pos.x = pygame.math.lerp(self.initial_pos.x, self.new_pos.x, dt *5)
-            self.game_entity.pos.y = pygame.math.lerp(self.initial_pos.y, self.new_pos.y, dt *5)
-
+            self.game_entity.pos.x = pygame.math.lerp(self.game_entity.pos.x, self.new_pos.x, 10 * dt)
+            self.game_entity.pos.y = pygame.math.lerp(self.game_entity.pos.y, self.new_pos.y, 10 * dt)
             self.game_entity.rect.center = self.game_entity.pos
-
-            print(f'position actuelle de l\'entité : {self.game_entity.pos}')
-            print('##########################################################')
-
-            if self.game_entity.pos == self.new_pos:
-                self.is_clicked = False
-                self.initial_pos = self.new_pos
-
         self.keep_game_entity_on_screen()
 
 class KeyboardMovementSystem(MovementSystem):
