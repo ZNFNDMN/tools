@@ -48,7 +48,8 @@ __all__ = [
     "CollisionEffectSystem",
     "CollisionEffectAnimation",
     "CollisionEffectAnimation2",
-    "AppearanceOnCollision"
+    "AppearanceOnCollision",
+    "EventAnimation"
 ]
 
 from inspect import isclass
@@ -791,6 +792,7 @@ class DragAndDrop(MovementSystem):
 
     def handle_events(self, event):
         if event.type == MOUSEBUTTONDOWN:
+            print('clic')
             if self.game_entity.rect.collidepoint(event.pos):
                 self.dragging = True
         if event.type == MOUSEBUTTONUP:
@@ -1178,6 +1180,7 @@ class ProceduralEnemyFactory: # convertir en movement_system
         #     self.enemies[number].rect.center = pygame.Vector2(coordinate)
         #     number += 1
 
+# animation de collision entre 2 entités
 class Animation:
     def __init__(self, game_entity1, game_entity2, duration):
         self.game_entity1 = game_entity1
@@ -1212,7 +1215,6 @@ class CollisionEffectAnimation2(Animation):
 
         self.init_time()
 
-
     def draw(self):
         r_intensity = int((sin(self.time * 5) + 1) * 75)
         g_intensity = int((sin(self.time * 8) + 1) * 127.5)
@@ -1228,6 +1230,39 @@ class CollisionEffectAnimation2(Animation):
         #c2.color = (r_intensity,g_intensity,b_intensity)
         #c2.border_width = 0
         #c2.draw()
+
+# animation de selon un evenement donné
+class EventAnimation:
+    def __init__(self, target_surf, event_type):
+        self.target_surf = target_surf
+        self.duration = 0.0
+        self.happened = False
+        self.time = 0.0
+        self.elapsed_time = 0.0
+        self.event_type = event_type
+        self.event_pos = None
+
+    def handle_events(self, event):
+        if event.type == self.event_type:
+            self.happened = True
+            self.event_pos = event.pos
+
+    def init_time(self):
+        self.time = pygame.time.get_ticks() / 1000
+
+    def update(self, dt):
+        pass
+            # self.elapsed_time += dt
+            #
+            # if self.elapsed_time >= self.duration:
+            #      self.happened = False
+
+    def draw(self):
+        self.init_time()
+
+# class ExplosionEffect(EventAnimation):
+#     def __init__(self, event_type):
+#         super().__init__(event_type)
 
 class GameEntityAppearance:
     def __init__(self, game_entity):
