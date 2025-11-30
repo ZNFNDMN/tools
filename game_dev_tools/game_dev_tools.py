@@ -58,6 +58,7 @@ import pygame
 from pygame import *
 import pygame.freetype
 import copy
+import os
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -617,7 +618,7 @@ class Player(GameEntity):
             if self.current_appearance.time_over:
                 self.current_appearance = self.default_appearance
 
-        self.movement_system.move(dt)
+        self.movement_system.update(dt)
 
         self.current_appearance.update(dt)
 
@@ -779,7 +780,7 @@ class MouseMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):  # récupérer l'instance pour gérer la position
         super().__init__(game_entity, surface)
 
-    def move(self, dt):
+    def update(self, dt):
         game_entity  = self.game_entity
         game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
         game_entity.rect.center = game_entity.pos
@@ -799,7 +800,7 @@ class DragAndDrop(MovementSystem):
             if self.game_entity.rect.collidepoint(event.pos):
                 self.dragging = False
 
-    def move(self, dt):
+    def update(self, dt):
         if self.dragging:
             game_entity = self.game_entity
             game_entity.pos = pygame.Vector2(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -819,7 +820,7 @@ class MoveWhereMouseIsClicked(MovementSystem):
             self.new_pos.x = event.pos[0]
             self.new_pos.y = event.pos[1]
 
-    def move(self, dt):
+    def update(self, dt):
         if self.is_clicked:
             self.game_entity.pos.x = pygame.math.lerp(self.game_entity.pos.x, self.new_pos.x, 10 * dt)
             self.game_entity.pos.y = pygame.math.lerp(self.game_entity.pos.y, self.new_pos.y, 10 * dt)
@@ -830,7 +831,7 @@ class KeyboardMovementSystem(MovementSystem):
     def __init__(self, game_entity, surface):
         super().__init__(game_entity, surface)
 
-    def move(self):
+    def update(self):
         game_entity =self.game_entity
         keys = pygame.key.get_pressed()
         left = keys[pygame.K_LEFT]
@@ -852,7 +853,7 @@ class KeyboardMovementSystem2(MovementSystem):
     def __init__(self, game_entity, surface):
         super().__init__(game_entity, surface)
 
-    def move(self, dt):
+    def update(self, dt):
         game_entity =self.game_entity
         keys = pygame.key.get_pressed()
         left = keys[pygame.K_LEFT]
@@ -913,32 +914,31 @@ class ImpactSystem:
         self.explosion_end_radius3 = 200
         self.explosion_end_radius4 = 200
 
-        self.explosion_speed = 25
+        self.explosion_speed = 10
 
     def update(self,dt):
-        print('impact update')
         if self.game_entity.pos.x - self.game_entity.radius <= 0:
             self.left_collision_happened = True
-            self.explosion_pos3 = self.game_entity.pos
+            self.explosion_pos3 = self.game_entity.pos.copy()
             #circle_velocity.x += circle_speed
         if self.game_entity.pos.x + self.game_entity.radius > self.surface_width:
             self.right_collision_happened = True
-            self.explosion_pos4 = self.game_entity.pos
+            self.explosion_pos4 = self.game_entity.pos.copy()
             #circle_velocity.x += -circle_speed
         if self.game_entity.pos.y - self.game_entity.radius < 0:
             self.top_collision_happened = True
-            self.explosion_pos1 = self.game_entity.pos
+            self.explosion_pos1 = self.game_entity.pos.copy()
             #circle_velocity.y = circle_speed
         if self.game_entity.pos.y + self.game_entity.radius > self.surface_height:
             self.bottom_collision_happened = True
-            self.explosion_pos2 = self.game_entity.pos
+            self.explosion_pos2 = self.game_entity.pos.copy()
             #circle_velocity.y = -circle_speed
 
     def draw(self):
         if self.top_collision_happened and self.explosion_radius1 <= self.explosion_end_radius1:
             self.explosion_radius1 += self.explosion_speed
             #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1, 1)
-            top_impact_animation = Circle(self.game_entity.target_surf,self.game_entity.pos, self.explosion_radius1)
+            top_impact_animation = Circle(self.game_entity.target_surf,self.explosion_pos1, self.explosion_radius1)
             top_impact_animation.color = (0, 255, 255)
             top_impact_animation.draw()
             #pygame.draw.circle(surface, (0, 255, 255), explosion_pos1, explosion_radius1 - 25, 1)
@@ -946,7 +946,7 @@ class ImpactSystem:
         if self.bottom_collision_happened and self.explosion_radius2 <= self.explosion_end_radius2:
             self.explosion_radius2 += self.explosion_speed
             #pygame.draw.circle(surface, (255, 255, 0), explosion_pos2, explosion_radius2, 1)
-            bottom_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius2)
+            bottom_impact_animation = Circle(self.game_entity.target_surf, self.explosion_pos2, self.explosion_radius2)
             bottom_impact_animation.color = (255, 255, 0)
             bottom_impact_animation.draw()
             #pygame.draw.circle(surface, (255, 255, 0), explosion_pos2, explosion_radius2 - 25, 1)
@@ -954,7 +954,7 @@ class ImpactSystem:
         if self.left_collision_happened and self.explosion_radius3 <= self.explosion_end_radius3:
             self.explosion_radius3 += self.explosion_speed
             #pygame.draw.circle(surface, (255, 0, 0), explosion_pos3, explosion_radius3, 1)
-            left_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius3)
+            left_impact_animation = Circle(self.game_entity.target_surf, self.explosion_pos3, self.explosion_radius3)
             left_impact_animation.color = (255, 0, 0)
             left_impact_animation.draw()
             #pygame.draw.circle(surface, (255, 0, 0), explosion_pos3, explosion_radius3 - 25, 1)
@@ -962,7 +962,7 @@ class ImpactSystem:
         if self.right_collision_happened and self.explosion_radius4 <= self.explosion_end_radius4:
             self.explosion_radius4 += self.explosion_speed
             #pygame.draw.circle(surface, (0, 0, 255), explosion_pos4, explosion_radius4, 1)
-            right_impact_animation = Circle(self.game_entity.target_surf, self.game_entity.pos, self.explosion_radius4)
+            right_impact_animation = Circle(self.game_entity.target_surf, self.explosion_pos4, self.explosion_radius4)
             right_impact_animation.color = (255, 255, 255)
             right_impact_animation.draw()
             #pygame.draw.circle(surface, (0, 0, 255), explosion_pos4, explosion_radius4 - 25, 1)
@@ -1244,18 +1244,23 @@ class EventAnimation:
 
     def handle_events(self, event):
         if event.type == self.event_type:
+            print('clic')
             self.happened = True
+            self.elapsed_time = 0
             self.event_pos = event.pos
 
     def init_time(self):
         self.time = pygame.time.get_ticks() / 1000
 
     def update(self, dt):
-        pass
-            # self.elapsed_time += dt
-            #
-            # if self.elapsed_time >= self.duration:
-            #      self.happened = False
+        if self.happened:
+            print(round(self.elapsed_time, 0))
+            self.elapsed_time += dt
+
+        if self.elapsed_time >= self.duration:
+            print('délai animation passé')
+            self.happened = False
+            self.elapsed_time = 0.0
 
     def draw(self):
         self.init_time()
