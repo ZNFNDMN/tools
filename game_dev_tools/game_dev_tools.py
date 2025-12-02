@@ -566,7 +566,9 @@ class GameEntity(pygame.sprite.Sprite):
                 shape.draw()
 
     def update_rect(self): # Encore utile?
+        print(f'radius dans update_rect : {self.radius}')
         self.rect.size = (self.radius * 2, self.radius * 2)
+        self.rect.center = self.pos
 
 ################################################
 ##################################################
@@ -691,8 +693,12 @@ class Enemy(GameEntity):
         self.delta_time = delta_time
         self.border_width = border_width
 
+    def check_collisions(self):
+        pass
+
     def update(self):
         self.movement_system.move()
+        self.check_collisions()
 
     def draw(self):
         self.game_entity_appearence.draw()
