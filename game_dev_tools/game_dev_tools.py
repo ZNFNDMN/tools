@@ -1206,13 +1206,15 @@ class CollisionEffectAnimation(Animation):
     def draw(self):
         self.init_time()
 
+######################################################################################
+#A remplacer par le systeme d'apparences des entités au lieu de dessiner par dessus
+#####################################################################################
 class CollisionEffectAnimation2(Animation):
     def __init__(self, game_entity1, game_entity2):
         super().__init__( game_entity1, game_entity2,5.0)
 
     def update(self,dt):
         super().update(dt)
-
         self.init_time()
 
     def draw(self):
@@ -1257,10 +1259,10 @@ class EventAnimation:
             print(round(self.elapsed_time, 0))
             self.elapsed_time += dt
 
-        if self.elapsed_time >= self.duration:
-            print('délai animation passé')
-            self.happened = False
-            self.elapsed_time = 0.0
+            if self.elapsed_time >= self.duration:
+                print('délai animation passé')
+                self.happened = False
+                self.elapsed_time = 0.0
 
     def draw(self):
         self.init_time()
