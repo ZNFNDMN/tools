@@ -546,7 +546,8 @@ class GameEntity(pygame.sprite.Sprite):
             self.init_object(component, attrs_to_update)
 
     def update(self, dt):
-        pass
+        self.update_rect()
+
         #self.central_shape.pos = self.pos
 
     def reinitialize_to_defaults_values(self):
@@ -555,6 +556,7 @@ class GameEntity(pygame.sprite.Sprite):
         # on réinitialise les valeurs par défauts
         if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
             if self.appearance.time_over:
+                print('time_over')
                 self.init_defaults_values()
 
     def draw(self):
@@ -565,8 +567,8 @@ class GameEntity(pygame.sprite.Sprite):
             for shape in self.appearance_components[component]:
                 shape.draw()
 
+    # centrer le rect de collision par rapport au cercle
     def update_rect(self): # Encore utile?
-        print(f'radius dans update_rect : {self.radius}')
         self.rect.size = (self.radius * 2, self.radius * 2)
         self.rect.center = self.pos
 
@@ -666,7 +668,6 @@ class AppearanceOnCollision:
         self.time_over = False
 
     def update(self, dt):
-
         self.shape.pos = self.entity.pos
 
         self.elapsed_time += dt
@@ -1252,7 +1253,6 @@ class EventAnimation:
 
     def handle_events(self, event):
         if event.type == self.event_type:
-            print('clic')
             self.happened = True
             self.elapsed_time = 0
             self.event_pos = event.pos
@@ -1262,11 +1262,10 @@ class EventAnimation:
 
     def update(self, dt):
         if self.happened:
-            print(round(self.elapsed_time, 0))
+           # print(round(self.elapsed_time, 0))
             self.elapsed_time += dt
 
             if self.elapsed_time >= self.duration:
-                print('délai animation passé')
                 self.happened = False
                 self.elapsed_time = 0.0
 
