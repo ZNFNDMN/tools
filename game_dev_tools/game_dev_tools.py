@@ -42,14 +42,14 @@ __all__ = [
     "PlayerAppearance6",
     "PlayerAppearance7",
     "PlayerAppearance8",
-    "EntityAppearance",
     "ProceduralEnemyFactory",
     "GameEntityFactory",
     "CollisionEffectSystem",
     "CollisionEffectAnimation",
     "CollisionEffectAnimation2",
     "AppearanceOnCollision",
-    "EventAnimation"
+    "EventAnimation",
+    "EntityDefaultAppearance"
 ]
 
 from inspect import isclass
@@ -547,7 +547,6 @@ class GameEntity(pygame.sprite.Sprite):
 
     def update(self, dt):
         self.update_rect()
-
         #self.central_shape.pos = self.pos
 
     def reinitialize_to_defaults_values(self):
@@ -560,7 +559,8 @@ class GameEntity(pygame.sprite.Sprite):
                 self.init_defaults_values()
 
     def draw(self):
-        self.draw_appearance_components()
+        self.draw_appearance_components() ###################
+        # mettre plutot self.appearance.draw() !!!!!!!!!!!!!!!!!!!
 
     def draw_appearance_components(self):
         for component in self.appearance_components:
@@ -584,6 +584,72 @@ class GameEntityFactory:
 
     def create_multiple_instances(self):
         return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
+
+class EntityDefaultAppearance:
+    #__slots__ = ['radius', 'pos']
+
+    def __init__(self, entity):
+        self.entity = entity
+        self.pos = self.entity.pos
+
+        self.components = {}
+
+        self.config = {}
+
+        self.init_components()
+
+    def init_components(self):
+        for key in self.components:
+            self.init_component(self.components[key], self.config[key])
+
+        # initialiser les attributs des composants d'apparences a partir d'un dict
+
+    def init_component(self, components_group: list, attrs_to_init: dict):
+        for component in components_group:
+            self.init_object(component, attrs_to_init)
+
+    # initialiser les attributs d'un objet à partir d'un dict
+    def init_object(self, object, attrs_to_init):
+        for attr, value in attrs_to_init.items():
+            # si attribut imbriqué -> split en liste -> récupérer dernier élément
+            if '.' in attr:
+                temp_obj = object
+                attribute_names = attr.split('.')
+                for attribute in attribute_names[:-1]:
+                    temp_obj = getattr(temp_obj, attribute)
+                setattr(temp_obj, attribute_names[-1], value)
+            else:
+                setattr(object, attr, value)
+
+    def update_component(self, keys: list, attrs_to_update: dict):
+        for key in keys:
+            self.init_component(self.components[key], attrs_to_update)
+
+    def update_orbital_objects(self, components_group: list, attrs_to_update: dict):
+        angle_increment = 2 * pi / len(components_group)
+        time = pygame.time.get_ticks() / 1000
+
+        for index, component in enumerate(components_group):
+            angle = angle_increment * index
+            self.init_object(component, attrs_to_update)
+
+    def update(self, dt):
+        self.update_rect()
+        # self.central_shape.pos = self.pos
+
+    def draw(self):
+        self.draw_components() ###################
+        # mettre plutot self.appearance.draw() !!!!!!!!!!!!!!!!!!!
+
+    def draw_components(self):
+        for component in self.components:
+            for shape in self.components[component]:
+                shape.draw()
+
+    # centrer le rect de collision par rapport au cercle
+    def update_rect(self): # Encore utile?
+        self.rect.size = (self.radius * 2, self.radius * 2)
+        self.rect.center = self.pos
 
 class Player(GameEntity):
     # Couleur blanc par défaut
@@ -632,6 +698,7 @@ class Player(GameEntity):
         self.streak.draw()
         self.central_shape.draw()
 
+# à supprimer ###############################
 class DefaultAppearance:
     def __init__(self, player):
         #super().__init__(shapes)
@@ -1276,6 +1343,7 @@ class EventAnimation:
 #     def __init__(self, event_type):
 #         super().__init__(event_type)
 
+# A supprimer #########################
 class GameEntityAppearance:
     def __init__(self, game_entity):
         self.game_entity=game_entity
@@ -1535,52 +1603,6 @@ class PlayerAppearance8(GameEntityAppearance):
 
         Circle(surface, pos, radius).draw()
 
-class EntityAppearance(GameEntityAppearance):
-    def __init__(self, shapes: list, player):
-        super().__init__(shapes, player)
-        self.player = player
-        self.angle = 0
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        radius = game_entity.size
-        entity_x = game_entity.pos[0]
-        entity_y = game_entity.pos[1]
-        surface = game_entity.target_surf
-        color = game_entity.color
-        time = pygame.time.get_ticks()/1000
-
-        center = pygame.Vector2(game_entity.pos)
-
-        init_vector_i = pygame.Vector2(1,0)  # Vecteur de direction correspondant à l'axe x
-        init_vector_j = pygame.Vector2(0,1)  # Vecteur de direction correspondant à l'axe y
-
-        for i in range(-80, 81, 20):
-            for j in range(-80,81,20):
-                pos = center + init_vector_i.rotate(degrees(time*0.1)) * i  + init_vector_j.rotate(degrees(time*0.1)) * j
-                #Line().draw(surface, color, center, (x, y))
-                Circle().draw(surface, (255, 0, 0), pos, 100 * cos(time), 1)
-
-        Circle().draw(surface, (0,255,0), (center[0],center[1]), 10,1)
-
-        # multiplicateur
-        # for i in range(1,11,2):
-        #     for j in range(1,11,2):
-        #         x = center * vector_i * i
-        #         y = center * vector_j * j
-        #         Line().draw(surface, color, center, (x,y))
-        #         Circle().draw(surface, (255, 0, 0), (x,y),3)
-
-        # for i in range(1, 11, 2):
-        #     for j in range(1,11,2):
-        #         vector_i = init_vector_i * i
-        #         vector_j = init_vector_j * j
-        #         x = center * vector_i
-        #         y = center * vector_j
-        #         Line().draw(surface, color, center, (x, y))
-        #         Circle().draw(surface, (255, 0, 0), (x,y),3)
-
 class Shape:
     __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
@@ -1610,9 +1632,10 @@ class Circle(Shape):
 class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
+        self.size = (0,0)
 
-    def draw(self,width_height:tuple=(40,40)):
-        rect = pygame.Rect(self.pos, width_height)
+    def draw(self):
+        rect = pygame.Rect(self.pos, self.size)
         rect.center = self.pos
         pygame.draw.rect(self.target_surf, self.color, rect, self.border_width)
 
