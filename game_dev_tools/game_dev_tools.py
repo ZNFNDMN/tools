@@ -555,10 +555,18 @@ class GameEntity(pygame.sprite.Sprite):
         # si self.appearance n'est pas une instance de l'apparence par défaut :
         # si le délai de l'apparence est dépassé
         # on réinitialise les valeurs par défauts
-        if not 'DefaultAppearance' in self.appearance.__class__.__name__:
-            if self.appearance.time_over:
-                self.appearance.time_over=False
-                self.appearance.trigger=False
+        # if not 'DefaultAppearance' in self.appearance.__class__.__name__:
+        #     if self.appearance.time_over:
+        #         self.appearance.time_over=False
+        #         self.appearance.trigger=False
+        #         self.appearance = self.defaults['appearance']
+
+        # une seule apparence à la fois sinon bordel
+        for key in self.appearances:
+            appearance = self.appearances[key]
+            if appearance.time_over:
+                appearance.time_over = False
+                #appearance.trigger = False
                 self.appearance = self.defaults['appearance']
 
     def reinitialize_to_defaults_values(self):
@@ -567,7 +575,6 @@ class GameEntity(pygame.sprite.Sprite):
         # on réinitialise les valeurs par défauts
         if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
             if self.appearance.time_over:
-                print('time_over')
                 self.init_defaults_values()
 
     def draw(self):
@@ -730,6 +737,7 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         self.duration = 0.0
         self.elapsed_time = 0.0
         self.time_over = False
+        #self.trigger = False
 
         #copier les composants de l'apparence par défaut de l'entité
         self.components = self.entity.defaults['appearance'].components
@@ -743,13 +751,12 @@ class EntityAppearanceOnTrigger(EntityAppearance):
 
     def reinit(self):
         self.elapsed_time = 0.0
-        self.time_over = False
+        self.time_over = True
 
     def update(self, dt):
         self.elapsed_time += dt
         if self.elapsed_time >= self.duration:
-            self.time_over = True
-            self.elapsed_time = 0.0
+            self.reinit()
 
 class Player(GameEntity):
     # Couleur blanc par défaut
