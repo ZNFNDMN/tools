@@ -739,11 +739,16 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         self.time_over = False
         #self.trigger = False
 
-        #copier les composants de l'apparence par défaut de l'entité
-        self.components = self.entity.defaults['appearance'].components
+        #copier la liste des composants
+        self.components = self.entity.defaults['appearance'].components.copy()
 
         #copier la config des composants de l'apparence par défaut de l'entité
-        self.config = self.entity.defaults['appearance'].config
+        self.config = self.entity.defaults['appearance'].config.copy()
+
+        #copier les composants de l'apparence par défaut de l'entité
+        for component in self.entity.defaults['appearance'].components:
+            for i,shape in enumerate(self.entity.defaults['appearance'].components[component]):
+                self.components[component][i] = copy.copy(shape)
 
         #On initialise ici
         #la classe d'apparence par défaut de l'entité concerné doit être créer
@@ -1740,11 +1745,13 @@ class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
         self.size = (0,0)
+        self.rect = pygame.Rect(self.pos, self.size)
+        self.rect.center = self.pos
 
     def draw(self):
-        rect = pygame.Rect(self.pos, self.size)
-        rect.center = self.pos
-        pygame.draw.rect(self.target_surf, self.color, rect, self.border_width)
+        self.rect = pygame.Rect(self.pos, self.size)
+        self.rect.center = self.pos
+        pygame.draw.rect(self.target_surf, self.color, self.rect, self.border_width)
 
 class Polygon(Shape):
     def __init__(self, target_surf, pos):
