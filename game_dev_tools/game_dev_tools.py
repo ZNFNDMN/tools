@@ -50,7 +50,8 @@ __all__ = [
     "AppearanceOnCollision",
     "EventAnimation",
     "EntityDefaultAppearance",
-    "EntityAppearanceOnTrigger"
+    "EntityAppearanceOnTrigger",
+    'get_span'
 ]
 
 from inspect import isclass
@@ -389,19 +390,27 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
 
         self.var_list = []
         self.text_pos = pos # position initiale a mettre a jour dans update
+
     # def add(self, text:str):
     #     self.text_list.append(text)
+    def update(self, var_list):
+        self.var_list = var_list
 
     def blit_text(self, text:str): # voir pour suppression
         txt = self.font.render(text,True,self.color)
         self.surface.blit(text,self.text_pos)
 
     def draw(self):
-        for i in range(len(self.var_list)):
-            string = f"{self.var_list[i]}"
-            self.font.render_to(self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size), string ,self.color)
-            #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
+        for i, value in enumerate(self.var_list):
+            if value.__class__.__name__ != 'str': string = f"{value}"
+            else: string = value
 
+            self.font.render_to(
+                self.surface,(self.text_pos[0],self.text_pos[1] + i*self.font_size),
+                string ,
+                self.color
+            )
+            #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
 # classe pour créer plusieurs surfaces dans une surface donné
 class PygameSurfaceFactory:
     def __init__(self, surf_to_blit_in:pygame.surface.Surface, rows, lines):
@@ -889,6 +898,9 @@ class MovementSystem:
     def __init__(self, game_entity, surface):
         self.game_entity = game_entity
         self.surface = surface
+
+    def handle_events(self, event):
+        pass
 
     def keep_game_entity_on_screen(self):
         game_entity = self.game_entity
@@ -1791,6 +1803,8 @@ class ProceduralAnimation:
     def __init__(self,entity):
         self.entity=entity
 
+
+
 # fonctions utilitaire
 
 def angle_to_perimeter( center, angle, largeur, hauteur):
@@ -1824,3 +1838,11 @@ def angle_to_perimeter( center, angle, largeur, hauteur):
         y = demi_hauteur - (pos_perimetre - 2 * largeur - hauteur)
 
     return center[0] + x, center[1] + y
+
+def get_span(x_basis, y_basis, origin, start, end, step ) -> list:
+    positions = []
+    for i in float_range(start, end, step):
+        for j in float_range(start, end, step):
+            positions.append(origin + x_basis * i + y_basis * j)
+
+    return positions
