@@ -1841,8 +1841,8 @@ def angle_to_perimeter( center, angle, largeur, hauteur):
 
 def get_span(x_basis, y_basis, origin, start, end, step ) -> list:
     positions = []
-    for i in float_range(start, end, step):
-        for j in float_range(start, end, step):
+    for i in float_range(start, end + step, step):
+        for j in float_range(start, end + step, step):
             positions.append(origin + x_basis * i + y_basis * j)
 
     return positions
