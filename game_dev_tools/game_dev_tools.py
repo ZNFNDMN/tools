@@ -51,7 +51,8 @@ __all__ = [
     "EventAnimation",
     "EntityDefaultAppearance",
     "EntityAppearanceOnTrigger",
-    'get_span'
+    'get_span',
+    'oscillate_value'
 ]
 
 from inspect import isclass
@@ -514,6 +515,10 @@ class GameEntity(pygame.sprite.Sprite):
         # exemples : 'on_collision_with'
         self.appearances = {}
 
+    def handle_events(self,event):
+        pass
+
+
     # créer des attributs à partir des entrées du dict defaults
     def init_defaults_values(self):
         for key, value in self.defaults.items():
@@ -618,10 +623,17 @@ class EntityAppearance:
 
     def __init__(self, entity):
         self.entity = entity
-        self.pos = self.entity.pos
+        self.target_surf = entity.target_surf
+        self.pos = entity.pos
+        self.rect = entity.rect
+        self.time = 0.0
+
         self.components = {}
         self.config = {}
         #self.init_components()
+
+    def init_time(self):
+        self.time = pygame.time.get_ticks() / 1000
 
     def handle_events(self, event):
         pass
@@ -684,59 +696,6 @@ class EntityDefaultAppearance(EntityAppearance):
 
     def __init__(self, entity):
         super().__init__(entity)
-        #self.init_components()
-
-    # def init_components(self):
-    #     for key in self.components:
-    #         self.init_component(self.components[key], self.config[key])
-    #
-    # # initialiser les attributs des composants d'apparences a partir d'un dict
-    # def init_component(self, components_group: list, attrs_to_init: dict):
-    #     for component in components_group:
-    #         self.init_object(component, attrs_to_init)
-    #
-    # # initialiser les attributs d'un objet à partir d'un dict
-    # def init_object(self, object, attrs_to_init):
-    #     for attr, value in attrs_to_init.items():
-    #         # si attribut imbriqué -> split en liste -> récupérer dernier élément
-    #         if '.' in attr:
-    #             temp_obj = object
-    #             attribute_names = attr.split('.')
-    #             for attribute in attribute_names[:-1]:
-    #                 temp_obj = getattr(temp_obj, attribute)
-    #             setattr(temp_obj, attribute_names[-1], value)
-    #         else:
-    #             setattr(object, attr, value)
-    #
-    # def update_component(self, keys: list, attrs_to_update: dict):
-    #     for key in keys:
-    #         self.init_component(self.components[key], attrs_to_update)
-    #
-    # def update_orbital_objects(self, components_group: list, attrs_to_update: dict):
-    #     angle_increment = 2 * pi / len(components_group)
-    #     time = pygame.time.get_ticks() / 1000
-    #
-    #     for index, component in enumerate(components_group):
-    #         angle = angle_increment * index
-    #         self.init_object(component, attrs_to_update)
-    #
-    # def update(self, dt):
-    #     self.update_rect()
-    #     # self.central_shape.pos = self.pos
-    #
-    # def draw(self):
-    #     self.draw_components() ###################
-    #     # mettre plutot self.appearance.draw() !!!!!!!!!!!!!!!!!!!
-    #
-    # def draw_components(self):
-    #     for component in self.components:
-    #         for shape in self.components[component]:
-    #             shape.draw()
-    #
-    # # centrer le rect de collision par rapport au cercle
-    # def update_rect(self): # Encore utile?
-    #     self.rect.size = (self.radius * 2, self.radius * 2)
-    #     self.rect.center = self.pos
 
 class EntityAppearanceOnTrigger(EntityAppearance):
     # __slots__ = ['radius', 'pos']
@@ -1804,7 +1763,6 @@ class ProceduralAnimation:
         self.entity=entity
 
 
-
 # fonctions utilitaire
 
 def angle_to_perimeter( center, angle, largeur, hauteur):
@@ -1846,3 +1804,6 @@ def get_span(x_basis, y_basis, origin, start, end, step ) -> list:
             positions.append(origin + x_basis * i + y_basis * j)
 
     return positions
+
+def oscillate_value(min, max, time, trigo_function) -> float:
+    return (min + max) / 2 + trigo_function(time) * (max - min) / 2
