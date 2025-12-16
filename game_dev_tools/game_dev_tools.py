@@ -1,4 +1,5 @@
 __all__ = [
+    'angle_to_perimeter',
     "circles_collide",
     "get_collision_point_of_circles",
     "get_collision_point_angle",
@@ -473,6 +474,8 @@ class GameEntity(pygame.sprite.Sprite):
         self.color=(255,255,255) # Blanc par défaut # a supprimer et déplacer dans apparence
         self.border_width = 0 # a supprimer et déplacer dans apparence
         self.speed  = 0 # a supprimer et déplacer dans default_movement_system
+        self.appearance = None # Sert à stocker l'apparence au cours du jeu
+
         #self.angle_increment=45 # for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
         # si la forme centrale est un cercle ou un polygone, la taille est défini par le rayon
@@ -1325,17 +1328,6 @@ class ProceduralEnemyFactory: # convertir en movement_system
 
             self.enemies[i].pos = pygame.Vector2(coordinate)
             self.enemies[i].rect.center = pygame.Vector2(coordinate)
-
-        # for angle in range(0,360, angle_i):
-        #     coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
-        #                                       radians(time_with_speed+angle),
-        #                                       surf_width,
-        #                                       surf_height
-        #     )
-        #
-        #     self.enemies[number].pos = pygame.Vector2(coordinate)
-        #     self.enemies[number].rect.center = pygame.Vector2(coordinate)
-        #     number += 1
 
 # animation de collision entre 2 entités
 class Animation:
