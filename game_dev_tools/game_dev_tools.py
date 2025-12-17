@@ -18,7 +18,6 @@ __all__ = [
     "GameText",
     "PygameSurfaceFactory",
     "GameEntity",
-    "Player",
     "Shape",
     "Circle",
     "Rectangle",
@@ -43,7 +42,6 @@ __all__ = [
     "PlayerAppearance6",
     "PlayerAppearance7",
     "PlayerAppearance8",
-    "ProceduralEnemyFactory",
     "GameEntityFactory",
     "CollisionEffectSystem",
     "CollisionEffectAnimation",
@@ -734,52 +732,52 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         if self.elapsed_time >= self.duration:
             self.reinit()
 
-class Player(GameEntity):
-    # Couleur blanc par défaut
-    def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
-        # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
-        super().__init__(target_surf, pos)
-        self.delta_time = delta_time
-        self.border_width = border_width
-        # gestion du mouvement
-        self.movement_system = MouseMovementSystem(self, self.target_surf)
-
-        # gestion des dimensions (essentiel pour la gestion de collision)
-        self.radius = 50
-        self.central_shape = Circle(self.target_surf, self.pos, self.radius)
-        self.central_shape.radius = self.radius
-        self.central_shape.border_width = 0
-        self.streak = StreakSystem(self, 50)
-        # gestion des apparences
-
-        self.appearances = {
-            'on_collision_with_player_projectile': AppearanceOnCollision1(self),
-            'on_collision_with_window': AppearanceOnCollision2()
-        }
-
-        self.default_appearance = DefaultAppearance(self)
-        self.current_appearance = self.default_appearance
-
-    def handle_input(self):
-        pass
-
-    def update(self, dt):
-        self.central_shape.pos = self.pos
-        self.streak.update(dt)
-
-        if not isinstance(self.current_appearance, DefaultAppearance):
-            if self.current_appearance.time_over:
-                self.current_appearance = self.default_appearance
-
-        self.movement_system.update(dt)
-
-        self.current_appearance.update(dt)
-
-    def draw(self):
-        #self.game_entity_appearance.draw()
-        #self.current_appearance.draw()
-        self.streak.draw()
-        self.central_shape.draw()
+# class Player(GameEntity):
+#     # Couleur blanc par défaut
+#     def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
+#         # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
+#         super().__init__(target_surf, pos)
+#         self.delta_time = delta_time
+#         self.border_width = border_width
+#         # gestion du mouvement
+#         self.movement_system = MouseMovementSystem(self, self.target_surf)
+#
+#         # gestion des dimensions (essentiel pour la gestion de collision)
+#         self.radius = 50
+#         self.central_shape = Circle(self.target_surf, self.pos, self.radius)
+#         self.central_shape.radius = self.radius
+#         self.central_shape.border_width = 0
+#         self.streak = StreakSystem(self, 50)
+#         # gestion des apparences
+#
+#         self.appearances = {
+#             'on_collision_with_player_projectile': AppearanceOnCollision1(self),
+#             'on_collision_with_window': AppearanceOnCollision2()
+#         }
+#
+#         self.default_appearance = DefaultAppearance(self)
+#         self.current_appearance = self.default_appearance
+#
+#     def handle_input(self):
+#         pass
+#
+#     def update(self, dt):
+#         self.central_shape.pos = self.pos
+#         self.streak.update(dt)
+#
+#         if not isinstance(self.current_appearance, DefaultAppearance):
+#             if self.current_appearance.time_over:
+#                 self.current_appearance = self.default_appearance
+#
+#         self.movement_system.update(dt)
+#
+#         self.current_appearance.update(dt)
+#
+#     def draw(self):
+#         #self.game_entity_appearance.draw()
+#         #self.current_appearance.draw()
+#         self.streak.draw()
+#         self.central_shape.draw()
 
 # à supprimer ###############################
 class DefaultAppearance:
@@ -1287,48 +1285,6 @@ class StreakSystem:   # ou trail?
             circle.draw()
 ################## Animations
 
-class ProceduralEnemyFactory: # convertir en movement_system
-    def __init__(self, surface, enemies):
-        self.surface= surface
-        self.enemies = enemies
-        self.enemy_count = len(enemies)
-
-        self.angles = []
-        self.angle_increment = pi * 2 / self.enemy_count
-
-        for i in range(self.enemy_count):
-            self.angles.append(self.angle_increment * i)
-
-        # for angle in self.angles:
-        #     print(degrees(angle))
-
-    def rotate_around_surface(self):
-        #self.enemy_count = len(self.enemies)
-
-        surface = self.surface
-        surf_center_x = self.surface.get_rect().centerx
-        surf_center_y = self.surface.get_rect().centery
-        surf_width = self.surface.get_width()
-        surf_height = self.surface.get_height()
-
-        time = pygame.time.get_ticks() / 1000
-        time_with_speed = time * 0.1
-        number = 0
-
-        #angle_increment = pi*2 / self.enemy_count
-
-        for i, angle in enumerate(self.angles):
-            #angle = self.angle_increment * i
-
-            coordinate = angle_to_perimeter((surf_center_x, surf_center_y),
-                                            time_with_speed + angle,
-                                            surf_width-120,
-                                            surf_height-120
-                                            )
-
-            self.enemies[i].pos = pygame.Vector2(coordinate)
-            self.enemies[i].rect.center = pygame.Vector2(coordinate)
-
 # animation de collision entre 2 entités
 class Animation:
     def __init__(self, game_entity1, game_entity2, duration):
@@ -1753,7 +1709,6 @@ class Line(Shape):
 class ProceduralAnimation:
     def __init__(self,entity):
         self.entity=entity
-
 
 # fonctions utilitaire
 
