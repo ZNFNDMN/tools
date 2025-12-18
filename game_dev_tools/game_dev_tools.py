@@ -519,70 +519,16 @@ class GameEntity(pygame.sprite.Sprite):
     def handle_events(self,event):
         pass
 
-
-    # créer des attributs à partir des entrées du dict defaults
-    def init_defaults_values(self):
-        for key, value in self.defaults.items():
-            # ça c'est caca
-            #self.__dict__[key] = value
-            setattr(self, key, value)
-
-    def init_appearance(self):
-        for key in self.appearance_components:
-            self.init_appearance_component(self.appearance_components[key], self.appearance_config[key])
-
-    # initialiser les attributs des composants d'apparences a partir d'un dict
-    def init_appearance_component(self, components_group:list, attrs_to_init:dict):
-        for component in components_group:
-            self.init_object(component, attrs_to_init)
-
-    # initialiser les attributs d'un objet à partir d'un dict
-    def init_object(self, object, attrs_to_init):
-        for attr, value in attrs_to_init.items():
-            # si attribut imbriqué -> split en liste -> récupérer dernier élément
-            if '.' in attr:
-                temp_obj = object
-                attribute_names = attr.split('.')
-                for attribute in attribute_names[:-1]:
-                    temp_obj = getattr(temp_obj, attribute)
-                setattr(temp_obj, attribute_names[-1], value)
-            else:
-                setattr(object, attr, value)
-
-    def update_entity_appearance_component(self, keys:list, attrs_to_update:dict):
-        for key in keys:
-            self.init_appearance_component(self.appearance_components[key], attrs_to_update)
-
-    def update_orbital_objects(self, components_group:list, attrs_to_update:dict):
-        angle_increment = 2 * pi / len(components_group)
-        time = pygame.time.get_ticks() / 1000
-
-        for index, component in enumerate(components_group):
-            angle = angle_increment * index
-            self.init_object(component, attrs_to_update)
-
     def update(self, dt):
-        self.reinitialize_appearance()
+        self.reinitialize_to_defaults_values()
+        self.appearance.update(dt)
         self.update_rect()
-        #self.central_shape.pos = self.pos
 
-    def reinitialize_appearance(self):
-        # si self.appearance n'est pas une instance de l'apparence par défaut :
-        # si le délai de l'apparence est dépassé
-        # on réinitialise les valeurs par défauts
-        # if not 'DefaultAppearance' in self.appearance.__class__.__name__:
-        #     if self.appearance.time_over:
-        #         self.appearance.time_over=False
-        #         self.appearance.trigger=False
-        #         self.appearance = self.defaults['appearance']
+    def check_collisions(self, entities):
+        pass
 
-        # une seule apparence à la fois sinon bordel
-        for key in self.appearances:
-            appearance = self.appearances[key]
-            if appearance.time_over:
-                appearance.time_over = False
-                #appearance.trigger = False
-                self.appearance = self.defaults['appearance']
+    def draw(self):
+        self.appearance.draw()
 
     def reinitialize_to_defaults_values(self):
         # si self.appearance n'est pas une instance de l'apparence par défaut :
@@ -592,32 +538,71 @@ class GameEntity(pygame.sprite.Sprite):
             if self.appearance.time_over:
                 self.init_defaults_values()
 
-    def draw(self):
-        self.draw_appearance_components() ###################
-        # mettre plutot self.appearance.draw() !!!!!!!!!!!!!!!!!!!
+    # initialiser les attributs des composants d'apparences a partir d'un dict
 
-    def draw_appearance_components(self):
-        for component in self.appearance_components:
-            for shape in self.appearance_components[component]:
-                shape.draw()
+    # def init_appearance(self):
+    #     for key in self.appearance_components:
+    #         self.init_appearance_component(self.appearance_components[key], self.appearance_config[key])
+    # # initialiser les attributs d'un objet à partir d'un dict
 
-    # centrer le rect de collision par rapport au cercle
+    # def init_appearance_component(self, components_group:list, attrs_to_init:dict):
+    #     for component in components_group:
+    #         self.init_object(component, attrs_to_init)
+
+    # def init_object(self, object, attrs_to_init):
+    #     for attr, value in attrs_to_init.items():
+    #         # si attribut imbriqué -> split en liste -> récupérer dernier élément
+    #         if '.' in attr:
+    #             temp_obj = object
+    #             attribute_names = attr.split('.')
+    #             for attribute in attribute_names[:-1]:
+    #                 temp_obj = getattr(temp_obj, attribute)
+    #             setattr(temp_obj, attribute_names[-1], value)
+    #         else:
+    #             setattr(object, attr, value)
+    #
+    # def update_entity_appearance_component(self, keys:list, attrs_to_update:dict):
+    #     for key in keys:
+    #         self.init_appearance_component(self.appearance_components[key], attrs_to_update)
+    #
+    # def update_orbital_objects(self, components_group:list, attrs_to_update:dict):
+    #     angle_increment = 2 * pi / len(components_group)
+    #     time = pygame.time.get_ticks() / 1000
+    #
+    #     for index, component in enumerate(components_group):
+    #         angle = angle_increment * index
+    #         self.init_object(component, attrs_to_update)
+
     def update_rect(self): # Encore utile?
         self.rect.size = (self.radius * 2, self.radius * 2)
         self.rect.center = self.pos
+    # def reinitialize_appearance(self):
+    #     # si self.appearance n'est pas une instance de l'apparence par défaut :
+    #     # si le délai de l'apparence est dépassé
+    #     # on réinitialise les valeurs par défauts
+    #     # if not 'DefaultAppearance' in self.appearance.__class__.__name__:
+    #     #     if self.appearance.time_over:
+    #     #         self.appearance.time_over=False
+    #     #         self.appearance.trigger=False
+    #     #         self.appearance = self.defaults['appearance']
+    #
+    #     # une seule apparence à la fois sinon bordel
+    #     for key in self.appearances:
+    #         appearance = self.appearances[key]
+    #         if appearance.time_over:
+    #             appearance.time_over = False
+    #             #appearance.trigger = False
+    #             self.appearance = self.defaults['appearance']
+    #
 
-################################################
-##################################################
-class GameEntityFactory:
-    def __init__(self, target_class, count:int, *args, **kwargs):
-        self.target_class = target_class
-        self.count = count
-        self.instances = []
-        self.args = args
-        self.kwargs = kwargs
+    # def draw_appearance_components(self):
+    #     for component in self.appearance_components:
+    #         for shape in self.appearance_components[component]:
+    #             shape.draw()
 
-    def create_multiple_instances(self):
-        return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
+    def init_defaults_values(self):
+        for key, value in self.defaults.items():
+            setattr(self, key, value)
 
 class EntityAppearance:
     # __slots__ = ['radius', 'pos']
@@ -731,6 +716,17 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         self.elapsed_time += dt
         if self.elapsed_time >= self.duration:
             self.reinit()
+
+class GameEntityFactory:
+    def __init__(self, target_class, count:int, *args, **kwargs):
+        self.target_class = target_class
+        self.count = count
+        self.instances = []
+        self.args = args
+        self.kwargs = kwargs
+
+    def create_multiple_instances(self):
+        return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
 
 # class Player(GameEntity):
 #     # Couleur blanc par défaut
