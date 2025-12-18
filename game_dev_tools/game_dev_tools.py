@@ -536,8 +536,9 @@ class GameEntity(pygame.sprite.Sprite):
         # on réinitialise les valeurs par défauts
         if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
             if self.appearance.time_over:
+                self.appearance.elapsed_time = 0.0
+                self.appearance.time_over = False
                 self.init_defaults_values()
-
     # initialiser les attributs des composants d'apparences a partir d'un dict
 
     # def init_appearance(self):
@@ -691,7 +692,6 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         self.duration = 0.0
         self.elapsed_time = 0.0
         self.time_over = False
-        #self.trigger = False
 
         #copier la liste des composants
         self.components = self.entity.defaults['appearance'].components.copy()
