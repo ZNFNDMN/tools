@@ -529,6 +529,10 @@ class GameEntity(pygame.sprite.Sprite):
 
     def draw(self):
         self.appearance.draw()
+        # affichage du rect de collision pour debugging
+        #pygame.draw.rect(self.target_surf, (0,255,0), self.rect)
+        # affichage du cercle de collision (rayon de collision)
+        #pygame.draw.circle(self.target_surf, (255,255,0), self.pos, self.radius)
 
     def reinitialize_to_defaults_values(self):
         # si self.appearance n'est pas une instance de l'apparence par défaut :
@@ -536,7 +540,7 @@ class GameEntity(pygame.sprite.Sprite):
         # on réinitialise les valeurs par défauts
         if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
             if self.appearance.time_over:
-                self.appearance.elapsed_time = 0.0
+                #self.appearance.elapsed_time = 0.0
                 self.appearance.time_over = False
                 self.init_defaults_values()
     # initialiser les attributs des composants d'apparences a partir d'un dict
@@ -1257,6 +1261,8 @@ class StreakSystem:   # ou trail?
         # liste pour stocker les cercles et dessiner
         self.circles = []
 
+        self.color = pygame.Color(255, 255, 255)
+
     def update(self, dt):
 
         if len(self.entity_last_pos_list) >= self.trail_length:
@@ -1268,7 +1274,7 @@ class StreakSystem:   # ou trail?
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
             self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
             # self.circle.color = (255, i % 255, i % 255)
-            self.circle.color = (i % 255, i % 255, i % 255)
+            self.circle.color = (i % self.color.r +1, i % self.color.g +1, i % self.color.b+1)
             self.circle.border_width = 0
             self.circles.append(self.circle)
         # ajoute la position en cours au tableau des dernieres positions
