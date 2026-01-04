@@ -43,15 +43,16 @@ __all__ = [
     "PlayerAppearance7",
     "PlayerAppearance8",
     "GameEntityFactory",
-    "CollisionEffectSystem",
-    "CollisionEffectAnimation",
-    "CollisionEffectAnimation2",
-    "AppearanceOnCollision",
     "EventAnimation",
     "EntityDefaultAppearance",
     "EntityAppearanceOnTrigger",
+    'EntityEffectsSystem',
     'get_span',
-    'oscillate_value'
+    'oscillate_value',
+    'Easing',
+    'ease',
+    'lerp',
+    'lerp_smooth'
 ]
 
 from inspect import isclass
@@ -335,48 +336,6 @@ class VisualHelper:
                 pos_offset = 5
                 surface.blit(coordinates_text, (x + pos_offset, y + pos_offset))
 
-    ###### à supprimer
-    def create_surfaces_in_grid(self, rows, lines):
-        #attribuer les valeurs aux variables pour réutilisation dans la fonction blit_grid_surfaces
-        self.grid_rows = rows
-        self.grid_lines = lines
-
-        surf_width = self.surface_width
-        surf_height = self.surface_height
-
-        row_width = surf_width / rows
-        line_height = surf_height / lines
-
-        for row in range(0, rows ):
-            for line in range(0, lines):
-                surface = pygame.surface.Surface((row_width, line_height))
-                surface.fill((255, 255, 255))
-                self.surfaces.append(surface) ######
-
-    ###### à supprimer
-    def blit_grid_surfaces(self):
-        rows = self.grid_rows
-        lines = self.grid_lines
-
-        surf_width = self.surface_width
-        surf_height = self.surface_height
-
-        row_width = surf_width / rows
-        line_height = surf_height / lines
-
-        surfaces = self.surfaces
-
-        #variable pour parcourir la liste des surfaces
-        grid_surface_index = 0
-
-        for row in range(rows):
-            x = row *  row_width
-            for line in range(lines):
-                y = line * line_height
-                #(100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
-                surfaces[grid_surface_index].blit(surfaces[grid_surface_index], (x, y))
-                grid_surface_index += 1
-
 class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone comme topleft
     def __init__(self, surface:pygame.Surface, pos, font_size, color=(255,255,255)):
         self.font_size = font_size
@@ -411,27 +370,28 @@ class GameText: # Revoir la classe pour gérer plusieurs textes dans une zone co
                 self.color
             )
             #self.surface.blit(txt,(self.text_pos[0],self.text_pos[1] + i*30))
+
 # classe pour créer plusieurs surfaces dans une surface donné
 class PygameSurfaceFactory:
-    def __init__(self, surf_to_blit_in:pygame.surface.Surface, rows, lines):
+    def __init__(self, surf_to_blit_in:pygame.surface.Surface, columns, lines):
         self.surf_list = []
         self.surf_to_blit_in = surf_to_blit_in
         self.surf_to_blit_in_width = surf_to_blit_in.get_width()
         self.surf_to_blit_in_height = surf_to_blit_in.get_height()
-        self.row_width = self.surf_to_blit_in_width / rows
+        self.column_width = self.surf_to_blit_in_width / columns
         self.line_height = self.surf_to_blit_in_height / lines
-        self.rows = rows
+        self.columns = columns
         self.lines = lines
 
     def create_surfaces(self):
-        row_width = self.row_width
+        column_width = self.column_width
         line_height = self.line_height
-        rows = self.rows
+        columns = self.columns
         lines = self.lines
 
-        for row in range(0,rows):
-            for line in range(0, lines):
-                sub_surface = pygame.surface.Surface((row_width, line_height))
+        for _ in range(columns):
+            for _ in range(lines):
+                sub_surface = pygame.surface.Surface((column_width, line_height))
                 self.surf_list.append(sub_surface)
 
     def fill_surfaces(self):
@@ -444,22 +404,26 @@ class PygameSurfaceFactory:
 
     def blit_surfaces(self):
         surf_to_blit_in = self.surf_to_blit_in
-        row_width = self.row_width
+        column_width = self.column_width
         line_height = self.line_height
-        rows = self.rows
+        columns = self.columns
         lines = self.lines
         surf_list = self.surf_list
 
         # variable pour parcourir la liste des surfaces
         sub_surf_index = 0
 
-        for row in range(rows):
+        for column in range(columns):
             for line in range(lines):
-                x = row * row_width
+                x = column * column_width
                 y = line * line_height
                 # (100 * grid_surface_index % 255, 100 * grid_surface_index % 255, 100 * grid_surface_index % 255)
                 surf_to_blit_in.blit(surf_list[sub_surf_index], (x, y))
                 sub_surf_index += 1
+
+######################################################################################
+# Classe d'entités et d'apparences
+######################################################################################
 
 class GameEntity(pygame.sprite.Sprite):
     def __init__(self, surface, pos):
@@ -473,6 +437,7 @@ class GameEntity(pygame.sprite.Sprite):
         self.border_width = 0 # a supprimer et déplacer dans apparence
         self.speed  = 0 # a supprimer et déplacer dans default_movement_system
         self.appearance = None # Sert à stocker l'apparence au cours du jeu
+        self.collision_active = True # permet de désactiver les collisions dans certains cas
 
         #self.angle_increment=45 # for polygon
         # définir une valeur de taille par défaut, le modifier ensuite dans le code si besoin
@@ -538,9 +503,10 @@ class GameEntity(pygame.sprite.Sprite):
         # si self.appearance n'est pas une instance de l'apparence par défaut :
         # si le délai de l'apparence est dépassé
         # on réinitialise les valeurs par défauts
+        # on réinitialise les valeurs par défauts
         if not 'DefaultAppearance' in self.appearance.__class__.__name__ :
             if self.appearance.time_over:
-                #self.appearance.elapsed_time = 0.0
+                self.appearance.elapsed_time = 0.0
                 self.appearance.time_over = False
                 self.init_defaults_values()
     # initialiser les attributs des composants d'apparences a partir d'un dict
@@ -721,6 +687,42 @@ class EntityAppearanceOnTrigger(EntityAppearance):
         if self.elapsed_time >= self.duration:
             self.reinit()
 
+class EntityEffectsSystem:
+    def __init__(self, entity):
+        self.entity = entity
+        self.active_effects_stacks = {}
+        self.triggers = [] # déclencheurs d'effets
+        self.effects = {}
+        self.stack_limits = {}
+
+    def update(self, dt):
+        for trigger in self.triggers:
+            self.active_effects_stacks[trigger] = [effect for effect in self.active_effects_stacks[trigger] if effect.alive]
+
+            if len(self.active_effects_stacks[trigger]) >= self.stack_limits[trigger]:
+                self.active_effects_stacks[trigger].pop(0)
+
+            for active_effect in self.active_effects_stacks[trigger]:
+                active_effect.update(dt)
+
+    def draw(self):
+        for trigger in self.triggers:
+            for effects in self.active_effects_stacks[trigger]:
+                effects.draw()
+
+    def create_active_effects_stacks(self):
+        # pour chaque déclencheur, créer une liste d'effets actifs
+        for trigger in self.triggers:
+            self.active_effects_stacks[trigger] = []
+
+    def create_effects(self, trigger_key:str):
+        stack = self.active_effects_stacks[trigger_key]
+        stack.append(self.effects[trigger_key])
+
+######################################################################################
+# Factories
+######################################################################################
+
 class GameEntityFactory:
     def __init__(self, target_class, count:int, *args, **kwargs):
         self.target_class = target_class
@@ -732,127 +734,9 @@ class GameEntityFactory:
     def create_multiple_instances(self):
         return [self.target_class(*self.args,**self.kwargs) for _ in range(self.count)]
 
-# class Player(GameEntity):
-#     # Couleur blanc par défaut
-#     def __init__(self,target_surf,pos,angle_increment=45,velocity=pygame.Vector2(0,0), speed=1,color=(255,255,255),border_width=0,delta_time=0):
-#         # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
-#         super().__init__(target_surf, pos)
-#         self.delta_time = delta_time
-#         self.border_width = border_width
-#         # gestion du mouvement
-#         self.movement_system = MouseMovementSystem(self, self.target_surf)
-#
-#         # gestion des dimensions (essentiel pour la gestion de collision)
-#         self.radius = 50
-#         self.central_shape = Circle(self.target_surf, self.pos, self.radius)
-#         self.central_shape.radius = self.radius
-#         self.central_shape.border_width = 0
-#         self.streak = StreakSystem(self, 50)
-#         # gestion des apparences
-#
-#         self.appearances = {
-#             'on_collision_with_player_projectile': AppearanceOnCollision1(self),
-#             'on_collision_with_window': AppearanceOnCollision2()
-#         }
-#
-#         self.default_appearance = DefaultAppearance(self)
-#         self.current_appearance = self.default_appearance
-#
-#     def handle_input(self):
-#         pass
-#
-#     def update(self, dt):
-#         self.central_shape.pos = self.pos
-#         self.streak.update(dt)
-#
-#         if not isinstance(self.current_appearance, DefaultAppearance):
-#             if self.current_appearance.time_over:
-#                 self.current_appearance = self.default_appearance
-#
-#         self.movement_system.update(dt)
-#
-#         self.current_appearance.update(dt)
-#
-#     def draw(self):
-#         #self.game_entity_appearance.draw()
-#         #self.current_appearance.draw()
-#         self.streak.draw()
-#         self.central_shape.draw()
-
-# à supprimer ###############################
-class DefaultAppearance:
-    def __init__(self, player):
-        #super().__init__(shapes)
-        self.player = player
-        self.target_surf = self.player.target_surf
-        self.color = self.player.color
-        self.radius = self.player.radius
-        self.pos = self.player.pos
-
-        self.shape = Circle(self.target_surf, self.pos, self.radius)
-        self.shape.color = self.color
-
-    def update(self, dt):
-        self.shape.pos = self.player.pos
-
-    def draw(self):
-        pass
-        #self.shape.draw()
-
-class AppearanceOnCollision:
-    def __init__(self,entity):
-        self.entity = entity
-        self.target_surf = self.entity.target_surf
-        self.pos = self.entity.pos
-        self.radius = self.entity.radius
-        self.shape = Circle(self.target_surf, self.pos, self.radius)
-        self.shape.color = (255,255,255)
-        self.duration = 2
-        self.elapsed_time = 0.0
-        self.time_over = False
-
-    def reinit(self):
-        self.elapsed_time = 0.0
-        self.time_over = False
-
-    def update(self, dt):
-        self.shape.pos = self.entity.pos
-
-        self.elapsed_time += dt
-        if self.elapsed_time >= self.duration:
-            self.time_over = True
-
-    def draw(self):
-        self.shape.draw()
-
-class AppearanceOnCollision1(AppearanceOnCollision):
-    def __init__(self,player):
-        super().__init__(player)
-        self.shape.color = (255,0,0)
-
-class AppearanceOnCollision2:
-    def __init__(self):
-        pass
-
-class Enemy(GameEntity):
-    def __init__(self, target_surf, pos, central_shape, angle_increment=30, velocity=pygame.Vector2(0, 0), speed=1,
-                 color=(255, 255, 255), border_width=0, delta_time=0):
-        # La forme et le systeme de mouvement sont instanciés dans chaque enfant de GameEntity
-        super().__init__(target_surf, color, pos, velocity, speed, central_shape, angle_increment)
-        self.delta_time = delta_time
-        self.border_width = border_width
-
-    def check_collisions(self):
-        pass
-
-    def update(self):
-        self.movement_system.move()
-        self.check_collisions()
-
-    def draw(self):
-        self.game_entity_appearence.draw()
-
-################### Movement systems
+######################################################################################
+# Movement systems
+######################################################################################
 
 class MovementSystem:
     def __init__(self, game_entity, surface):
@@ -1034,16 +918,6 @@ class KeyboardMovementSystem2(MovementSystem):
 
         game_entity.pos += game_entity.velocity * game_entity.speed * dt
         game_entity.rect.center = game_entity.pos
-
-class CollisionEffectSystem:
-    def __init__(self, list):
-        self.list = {}
-
-    def add(self, name, effect):
-        self.list[name] = effect
-
-    def draw(self, name):
-        self.list[name].draw()
 
 class ImpactSystem:
     def __init__(self, game_entity):
@@ -1260,11 +1134,11 @@ class StreakSystem:   # ou trail?
         self.circle = None
         # liste pour stocker les cercles et dessiner
         self.circles = []
-
         self.color = pygame.Color(255, 255, 255)
+        self.entity_appearance_elapsed_time = 0.0
+        self.entity_appearance_duration = 0.0
 
     def update(self, dt):
-
         if len(self.entity_last_pos_list) >= self.trail_length:
             self.entity_last_pos_list.pop(0)
 
@@ -1274,7 +1148,6 @@ class StreakSystem:   # ou trail?
             # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
             self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
             # self.circle.color = (255, i % 255, i % 255)
-            self.circle.color = (i % self.color.r +1, i % self.color.g +1, i % self.color.b+1)
             self.circle.border_width = 0
             self.circles.append(self.circle)
         # ajoute la position en cours au tableau des dernieres positions
@@ -1305,40 +1178,6 @@ class Animation:
 
         if self.elapsed_time >= self.duration:
             self.alive = False
-
-class CollisionEffectAnimation(Animation):
-    def __init__(self,game_entity1, game_entity2):
-        super().__init__(game_entity1, game_entity2, 2.0)
-
-    def draw(self):
-        self.init_time()
-
-######################################################################################
-#A remplacer par le systeme d'apparences des entités au lieu de dessiner par dessus
-#####################################################################################
-class CollisionEffectAnimation2(Animation):
-    def __init__(self, game_entity1, game_entity2):
-        super().__init__( game_entity1, game_entity2,5.0)
-
-    def update(self,dt):
-        super().update(dt)
-        self.init_time()
-
-    def draw(self):
-        r_intensity = int((sin(self.time * 5) + 1) * 75)
-        g_intensity = int((sin(self.time * 8) + 1) * 127.5)
-        b_intensity = int((sin(self.time * 10) + 1) * 127.5)
-
-        c = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
-        c.color = (r_intensity, g_intensity, b_intensity)
-        c.border_width = 0
-        c.color = (r_intensity, g_intensity, b_intensity)
-        c.draw()
-
-        #c2 = Circle(self.game_entity2.target_surf, self.game_entity2.pos, self.game_entity2.radius)
-        #c2.color = (r_intensity,g_intensity,b_intensity)
-        #c2.border_width = 0
-        #c2.draw()
 
 # animation de selon un evenement donné
 class EventAnimation:
@@ -1640,7 +1479,7 @@ class Shape:
     __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
         self.pos = pos
-        self.color = (255,255,255)
+        self.color = Color(255,255,255)
         self.border_width = 1
         self.target_surf = target_surf
 
@@ -1712,7 +1551,250 @@ class ProceduralAnimation:
     def __init__(self,entity):
         self.entity=entity
 
+
+import math
+from typing import Callable
+
+class Easing:
+    """
+    Bibliothèque de fonctions d'easing pour interpolations.
+    Toutes les fonctions prennent un float t entre 0.0 et 1.0
+    et retournent un float entre 0.0 et 1.0
+    """
+
+    # ========== LINEAR ==========
+    @staticmethod
+    def linear(t: float) -> float:
+        """Interpolation linéaire (pas d'easing)"""
+        return t
+
+    # ========== QUADRATIC ==========
+    @staticmethod
+    def ease_in_quad(t: float) -> float:
+        """Accélération quadratique"""
+        return t ** 2
+
+    @staticmethod
+    def ease_out_quad(t: float) -> float:
+        """Décélération quadratique"""
+        return 1 - (1 - t) ** 2
+
+    @staticmethod
+    def ease_in_out_quad(t: float) -> float:
+        """Accélération puis décélération quadratique"""
+        if t < 0.5:
+            return 2 * t ** 2
+        else:
+            return 1 - 2 * (1 - t) ** 2
+
+    # ========== CUBIC ==========
+    @staticmethod
+    def ease_in_cubic(t: float) -> float:
+        """Accélération cubique (plus prononcée)"""
+        return t ** 3
+
+    @staticmethod
+    def ease_out_cubic(t: float) -> float:
+        """Décélération cubique"""
+        return 1 - (1 - t) ** 3
+
+    @staticmethod
+    def ease_in_out_cubic(t: float) -> float:
+        """Accélération puis décélération cubique"""
+        if t < 0.5:
+            return 4 * t ** 3
+        else:
+            return 1 - 4 * (1 - t) ** 3
+
+    # ========== QUARTIC ==========
+    @staticmethod
+    def ease_in_quart(t: float) -> float:
+        """Accélération quartique (très prononcée)"""
+        return t ** 4
+
+    @staticmethod
+    def ease_out_quart(t: float) -> float:
+        """Décélération quartique"""
+        return 1 - (1 - t) ** 4
+
+    @staticmethod
+    def ease_in_out_quart(t: float) -> float:
+        """Accélération puis décélération quartique"""
+        if t < 0.5:
+            return 8 * t ** 4
+        else:
+            return 1 - 8 * (1 - t) ** 4
+
+    # ========== QUINTIC ==========
+    @staticmethod
+    def ease_in_quint(t: float) -> float:
+        """Accélération quintique (extrêmement prononcée)"""
+        return t ** 5
+
+    @staticmethod
+    def ease_out_quint(t: float) -> float:
+        """Décélération quintique"""
+        return 1 - (1 - t) ** 5
+
+    @staticmethod
+    def ease_in_out_quint(t: float) -> float:
+        """Accélération puis décélération quintique"""
+        if t < 0.5:
+            return 16 * t ** 5
+        else:
+            return 1 - 16 * (1 - t) ** 5
+
+    # ========== SINUSOIDAL ==========
+    @staticmethod
+    def ease_in_sine(t: float) -> float:
+        """Accélération sinusoïdale (douce)"""
+        return 1 - math.cos(t * math.pi / 2)
+
+    @staticmethod
+    def ease_out_sine(t: float) -> float:
+        """Décélération sinusoïdale (douce)"""
+        return math.sin(t * math.pi / 2)
+
+    @staticmethod
+    def ease_in_out_sine(t: float) -> float:
+        """Accélération puis décélération sinusoïdale (très douce)"""
+        return 0.5 - 0.5 * math.cos(t * math.pi)
+
+    # ========== EXPONENTIAL ==========
+    @staticmethod
+    def ease_in_expo(t: float) -> float:
+        """Accélération exponentielle (très dramatique)"""
+        return 0 if t == 0 else 2 ** (10 * (t - 1))
+
+    @staticmethod
+    def ease_out_expo(t: float) -> float:
+        """Décélération exponentielle"""
+        return 1 if t == 1 else 1 - 2 ** (-10 * t)
+
+    @staticmethod
+    def ease_in_out_expo(t: float) -> float:
+        """Accélération puis décélération exponentielle"""
+        if t == 0 or t == 1:
+            return t
+        if t < 0.5:
+            return 0.5 * 2 ** (20 * t - 10)
+        else:
+            return 1 - 0.5 * 2 ** (-20 * t + 10)
+
+    # ========== CIRCULAR ==========
+    @staticmethod
+    def ease_in_circ(t: float) -> float:
+        """Accélération circulaire"""
+        return 1 - math.sqrt(1 - t ** 2)
+
+    @staticmethod
+    def ease_out_circ(t: float) -> float:
+        """Décélération circulaire"""
+        return math.sqrt(1 - (1 - t) ** 2)
+
+    @staticmethod
+    def ease_in_out_circ(t: float) -> float:
+        """Accélération puis décélération circulaire"""
+        if t < 0.5:
+            return 0.5 * (1 - math.sqrt(1 - 4 * t ** 2))
+        else:
+            return 0.5 * (math.sqrt(1 - 4 * (1 - t) ** 2) + 1)
+
+    # ========== BACK (dépassement) ==========
+    @staticmethod
+    def ease_in_back(t: float, s: float = 1.70158) -> float:
+        """Accélération avec recul initial"""
+        return t * t * ((s + 1) * t - s)
+
+    @staticmethod
+    def ease_out_back(t: float, s: float = 1.70158) -> float:
+        """Décélération avec dépassement final"""
+        t -= 1
+        return t * t * ((s + 1) * t + s) + 1
+
+    @staticmethod
+    def ease_in_out_back(t: float, s: float = 1.70158) -> float:
+        """Recul initial et dépassement final"""
+        s *= 1.525
+        t *= 2
+        if t < 1:
+            return 0.5 * (t * t * ((s + 1) * t - s))
+        t -= 2
+        return 0.5 * (t * t * ((s + 1) * t + s) + 2)
+
+    # ========== ELASTIC (rebond) ==========
+    @staticmethod
+    def ease_in_elastic(t: float) -> float:
+        """Accélération avec effet élastique"""
+        if t == 0 or t == 1:
+            return t
+        return -(2 ** (10 * (t - 1))) * math.sin((t - 1.1) * 5 * math.pi)
+
+    @staticmethod
+    def ease_out_elastic(t: float) -> float:
+        """Décélération avec effet élastique (rebond)"""
+        if t == 0 or t == 1:
+            return t
+        return 2 ** (-10 * t) * math.sin((t - 0.1) * 5 * math.pi) + 1
+
+    @staticmethod
+    def ease_in_out_elastic(t: float) -> float:
+        """Élastique des deux côtés"""
+        if t == 0 or t == 1:
+            return t
+        t *= 2
+        if t < 1:
+            return -0.5 * (2 ** (10 * (t - 1))) * math.sin((t - 1.1) * 5 * math.pi)
+        return 0.5 * (2 ** (-10 * (t - 1))) * math.sin((t - 1.1) * 5 * math.pi) + 1
+
+    # ========== BOUNCE (rebond) ==========
+    @staticmethod
+    def ease_out_bounce(t: float) -> float:
+        """Décélération avec effet de rebond"""
+        if t < 1 / 2.75:
+            return 7.5625 * t * t
+        elif t < 2 / 2.75:
+            t -= 1.5 / 2.75
+            return 7.5625 * t * t + 0.75
+        elif t < 2.5 / 2.75:
+            t -= 2.25 / 2.75
+            return 7.5625 * t * t + 0.9375
+        else:
+            t -= 2.625 / 2.75
+            return 7.5625 * t * t + 0.984375
+
+    @staticmethod
+    def ease_in_bounce(t: float) -> float:
+        """Accélération avec effet de rebond"""
+        return 1 - Easing.ease_out_bounce(1 - t)
+
+    @staticmethod
+    def ease_in_out_bounce(t: float) -> float:
+        """Rebond des deux côtés"""
+        if t < 0.5:
+            return Easing.ease_in_bounce(t * 2) * 0.5
+        return Easing.ease_out_bounce(t * 2 - 1) * 0.5 + 0.5
+
 # fonctions utilitaire
+
+def ease(start: float, end: float, t: float, easing_func: Callable = None) -> float:
+    """
+    Interpolation avec fonction d'easing
+
+    Args:
+        start: Valeur de départ
+        end: Valeur d'arrivée
+        t: Progression (0.0 à 1.0)
+        easing_func: Fonction d'easing à appliquer (par défaut: linear)
+
+    Returns:
+        Valeur interpolée
+    """
+    if easing_func is None:
+        easing_func = Easing.linear
+
+    eased_t = easing_func(t)
+    return lerp(start, end, eased_t)
 
 def angle_to_perimeter( center, angle, largeur, hauteur):
     """Méthode unifiée pour carré ET rectangle"""
@@ -1756,3 +1838,12 @@ def get_span(x_basis, y_basis, origin, start, end, step ) -> list:
 
 def oscillate_value(min, max, time, trigo_function) -> float:
     return (min + max) / 2 + trigo_function(time) * (max - min) / 2
+
+def lerp(a, b, t):
+    return a + ( b - a ) * t
+
+def lerp_smooth(a, b, t, smooth_factor):
+    return lerp(a, b, smooth_factor * t)
+
+
+
