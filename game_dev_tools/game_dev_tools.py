@@ -397,10 +397,10 @@ class PygameSurfaceFactory:
     def fill_surfaces(self):
         surf_list = self.surf_list
 
-        color_i = 0
-        for surf in range(len(surf_list)):
-            surf_list[surf].fill((3 * color_i % 255, 3 * color_i % 255, 3 * color_i % 255))
-            color_i += 1
+
+        for surf in surf_list:
+            surf.fill((0,0,0))
+
 
     def blit_surfaces(self):
         surf_to_blit_in = self.surf_to_blit_in
@@ -1479,6 +1479,7 @@ class Shape:
     __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
         self.pos = pos
+        self.pos = pos
         self.color = Color(255,255,255)
         self.border_width = 1
         self.target_surf = target_surf
@@ -1509,7 +1510,7 @@ class Rectangle(Shape):
         self.rect.center = self.pos
 
     def draw(self):
-        self.rect = pygame.Rect(self.pos, self.size)
+        self.rect.size = self.size
         self.rect.center = self.pos
         pygame.draw.rect(self.target_surf, self.color, self.rect, self.border_width)
 
