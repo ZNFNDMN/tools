@@ -52,7 +52,8 @@ __all__ = [
     'Easing',
     'ease',
     'lerp',
-    'lerp_smooth'
+    'lerp_smooth',
+    'get_angle'
 ]
 
 from inspect import isclass
@@ -397,10 +398,8 @@ class PygameSurfaceFactory:
     def fill_surfaces(self):
         surf_list = self.surf_list
 
-
         for surf in surf_list:
             surf.fill((0,0,0))
-
 
     def blit_surfaces(self):
         surf_to_blit_in = self.surf_to_blit_in
@@ -1845,6 +1844,11 @@ def lerp(a, b, t):
 
 def lerp_smooth(a, b, t, smooth_factor):
     return lerp(a, b, smooth_factor * t)
+
+def get_angle(target:pygame.Vector2, origin:pygame.Vector2):
+    vector = pygame.Vector2(target.x - origin.x, target.y - origin.y)
+    return math.atan2(vector.y, vector.x)
+
 
 
 
