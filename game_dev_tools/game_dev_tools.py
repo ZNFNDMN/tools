@@ -1485,49 +1485,49 @@ class Shape:
 class Circle(Shape):
     #__slots__ = ['radius', 'rect']
 
-    def __init__(self, target_surf, pos, radius):
+    def __init__(self, target_surf, pos, radius, alpha=False):
         super().__init__(target_surf, pos)
         # 2 attributs nécessaires pour pouvoir gérer les collisions avec pygame.sprite.circle_collide
         self.radius =  radius
         self.rect = None
+        self.alpha = alpha
 
         # gestion transparence
-        self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
-        self.alpha_surf_width = self.alpha_surf.get_rect().width
-        self.alpha_surf_height = self.alpha_surf.get_rect().height
+        # self.radius ne dois jamais valoir zéro
+        if alpha:
+            self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
+            self.alpha_surf_width = self.alpha_surf.get_rect().width
+            self.alpha_surf_height = self.alpha_surf.get_rect().height
+
+    def update(self, dt):
+        # mise à jour de la surface alpha
+        if self.alpha:
+            self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
+            self.alpha_surf_width = self.alpha_surf.get_rect().width
+            self.alpha_surf_height = self.alpha_surf.get_rect().height
 
     def draw(self):
-        # Pour les cercles ####################################################################
-        # plus grand pour ne pas clipper
-
-            #alpha_surf = pygame.Surface(alpha_surf_size, pygame.SRCALPHA)
-            #self.target_surf = alpha_surf
-            # # position dans la surface alpha
-        # pos_in_alpha_surf =  pygame.Vector2(self.alpha_surf_width / 2, self.alpha_surf_height / 2)
-        #
-        #     #self.shape.draw()
-        #     #
-        # self.alpha_surf.fill((0,0,0,0))
-        #
-        # # positionnement de l'alpha surf sur la fenetre
-        # pygame.draw.circle(
-        #     self.alpha_surf,
-        #     self.color,
-        #     pos_in_alpha_surf,
-        #     self.radius,
-        #     self.border_width
-        # )
-        #
-        # self.target_surf.blit(self.alpha_surf, self.alpha_surf.get_rect(center=self.pos))
-
-        #############################################
-        pygame.draw.circle(
-            self.target_surf,
-            self.color,
-            self.pos,
-            self.radius,
-            self.border_width
-        )
+        if not self.alpha:
+            pygame.draw.circle(
+                self.target_surf,
+                self.color,
+                self.pos,
+                self.radius,
+                self.border_width
+            )
+        else:
+            pos_in_alpha_surf = pygame.Vector2(self.alpha_surf_width / 2, self.alpha_surf_height / 2)
+            self.alpha_surf.fill((0, 0, 0, 0))
+            # # positionnement de l'alpha surf sur la fenetre
+            pygame.draw.circle(
+                self.alpha_surf,
+                self.color,
+                pos_in_alpha_surf,
+                self.radius,
+                self.border_width
+            )
+            #
+            self.target_surf.blit(self.alpha_surf, self.alpha_surf.get_rect(center=self.pos))
         ###########################################
 class Rectangle(Shape):
     def __init__(self, target_surf, pos):
