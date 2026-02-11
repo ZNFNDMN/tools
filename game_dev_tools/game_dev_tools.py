@@ -1478,13 +1478,12 @@ class Shape:
     __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
         self.pos = pos
-        self.pos = pos
         self.color = Color(255,255,255)
         self.border_width = 1
         self.target_surf = target_surf
 
 class Circle(Shape):
-    __slots__ = ['radius', 'rect']
+    #__slots__ = ['radius', 'rect']
 
     def __init__(self, target_surf, pos, radius):
         super().__init__(target_surf, pos)
@@ -1492,7 +1491,36 @@ class Circle(Shape):
         self.radius =  radius
         self.rect = None
 
+        # gestion transparence
+        self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
+        self.alpha_surf_width = self.alpha_surf.get_rect().width
+        self.alpha_surf_height = self.alpha_surf.get_rect().height
+
     def draw(self):
+        # Pour les cercles ####################################################################
+        # plus grand pour ne pas clipper
+
+            #alpha_surf = pygame.Surface(alpha_surf_size, pygame.SRCALPHA)
+            #self.target_surf = alpha_surf
+            # # position dans la surface alpha
+        # pos_in_alpha_surf =  pygame.Vector2(self.alpha_surf_width / 2, self.alpha_surf_height / 2)
+        #
+        #     #self.shape.draw()
+        #     #
+        # self.alpha_surf.fill((0,0,0,0))
+        #
+        # # positionnement de l'alpha surf sur la fenetre
+        # pygame.draw.circle(
+        #     self.alpha_surf,
+        #     self.color,
+        #     pos_in_alpha_surf,
+        #     self.radius,
+        #     self.border_width
+        # )
+        #
+        # self.target_surf.blit(self.alpha_surf, self.alpha_surf.get_rect(center=self.pos))
+
+        #############################################
         pygame.draw.circle(
             self.target_surf,
             self.color,
@@ -1500,7 +1528,7 @@ class Circle(Shape):
             self.radius,
             self.border_width
         )
-
+        ###########################################
 class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
@@ -1546,11 +1574,6 @@ class Line(Shape):
     def draw(self):
         #start_pos = self.pos
         pygame.draw.line(self.target_surf, self.color, self.start_pos, self.end_pos, self.border_width)
-
-class ProceduralAnimation:
-    def __init__(self,entity):
-        self.entity=entity
-
 
 import math
 from typing import Callable
