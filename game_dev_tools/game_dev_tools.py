@@ -1493,15 +1493,14 @@ class Circle(Shape):
         self.alpha = alpha
 
         # gestion transparence
-        # self.radius ne dois jamais valoir zéro
-        if alpha:
+        if self.alpha:
             self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
             self.alpha_surf_width = self.alpha_surf.get_rect().width
             self.alpha_surf_height = self.alpha_surf.get_rect().height
 
     def update(self, dt):
         # mise à jour de la surface alpha
-        if self.alpha:
+        if self.alpha and self.radius > 0:
             self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
             self.alpha_surf_width = self.alpha_surf.get_rect().width
             self.alpha_surf_height = self.alpha_surf.get_rect().height
