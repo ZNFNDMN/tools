@@ -1129,8 +1129,6 @@ class StreakSystem:   # ou trail?
         self.surface = self.game_entity.target_surf
         self.trail_length = trail_length
         # gestion streak
-        self.entity_last_pos_list = []
-        self.circle = None
         # liste pour stocker les cercles et dessiner
         self.circles = []
         self.color = pygame.Color(255, 255, 255)
@@ -1138,25 +1136,54 @@ class StreakSystem:   # ou trail?
         self.entity_appearance_duration = 0.0
 
     def update(self, dt):
-        if len(self.entity_last_pos_list) >= self.trail_length:
-            self.entity_last_pos_list.pop(0)
+        #récupérer la position en cours
+        current_pos = self.game_entity.pos.copy()
 
-        for i in range(len(self.entity_last_pos_list)):
-            if len(self.circles) >= self.trail_length:
-                self.circles.pop(0)
-            # pygame.draw.circle(surface, (i % 255, i % 255, i % 255), circle_last_pos_list[i], radius + 10)
-            self.circle = Circle(self.surface, self.entity_last_pos_list[i], self.game_entity.radius)
-            # self.circle.color = (255, i % 255, i % 255)
-            self.circle.border_width = 0
-            self.circles.append(self.circle)
-        # ajoute la position en cours au tableau des dernieres positions
-        self.entity_last_pos_list.append(self.game_entity.pos.copy())
+        # Créer un cercle avec cette position
+        circle = Circle(self.surface, current_pos, self.game_entity.radius, True)
+        circle.border_width = 0
+
+        # ajouter la liste des cercles
+        self.circles.append(circle)
+
+        # combler les l'espace entre les cercles
+        # if len(self.circles) >= 2:
+        #     last_pos = self.circles[-2].pos
+        #     distance = int(current_pos.distance_to(last_pos))
+        #     if distance >= 5:
+        #         for i in range(distance):
+        #             progress = i / distance
+        #             pos = lerp(last_pos, current_pos, progress)
+        #             c = Circle(self.surface, pos, self.game_entity.radius)
+        #             c.border_width = 0
+        #             self.circles.append(c)
+
+        # si le nombre de cercle atteint le max
+        # supprimer la l'entrée la plus ancienne
+        if len(self.circles) >= self.trail_length:
+            self.circles.pop(0)
+
+        for circle in self.circles:
+            i = self.circles.index(circle)
+            progress = 1 - (i / self.trail_length)
+            circle.color.r = int(pygame.math.lerp(self.game_entity.color.r, 0, progress, True))
+            circle.color.g = int(pygame.math.lerp(self.game_entity.color.g, 0, progress, True))
+            circle.color.b = int(pygame.math.lerp(self.game_entity.color.b, 0, progress, True))
+
+
+            progress = (1 - (i / self.trail_length))
+            circle.color.a = int(pygame.math.lerp(self.game_entity.color.a, 0, progress, True))
+            if 1 <= i < len(self.circles) - 1:
+                pass
+                # print(circle.pos.distance_to(self.circles[i + 1].pos))
+                # distance = circle.pos.distance_to(self.circles[i + 1].pos)
 
     def draw(self):
         # prévoir dessin seulement pendant déplacement
         # créer un cercle pour chacune des dernieres pos
         for circle in self.circles:
             circle.draw()
+
 ################## Animations
 
 # animation de collision entre 2 entités
