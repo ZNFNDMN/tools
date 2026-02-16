@@ -53,7 +53,8 @@ __all__ = [
     'ease',
     'lerp',
     'lerp_smooth',
-    'get_angle'
+    'get_angle',
+    'TrailSystem'
 ]
 
 from inspect import isclass
@@ -1183,6 +1184,74 @@ class StreakSystem:   # ou trail?
         # créer un cercle pour chacune des dernieres pos
         for circle in self.circles:
             circle.draw()
+##############################################
+# Dessin de traces d'objets avec systeme de particules
+class TrailSystem:
+    def __init__(self, entity, trail_object_lifetime):
+        self.entity = entity
+        self.surface = self.entity.surface
+
+        self.trail_objects = []
+        self.trail_objects_lifetime = trail_object_lifetime
+
+    def update(self, dt):
+        self.add_trail_object()
+        self.update_trail_objects(dt)
+        self.delete_trail_objects()
+
+    def update_trail_objects(self, dt):
+        for object in self.trail_objects:
+            object.update(dt)
+            progress = (object.timer / object.duration) ** 2
+
+            object.color.a = int(pygame.math.lerp(
+                object.start_alpha,
+                object.end_alpha,
+                progress,
+                True
+            ))
+
+    def add_trail_object(self):
+        pos = self.entity.pos.copy()
+        object = TrailObject(self.surface, pos, self.entity.radius, pygame.Color(self.entity.color), self.trail_objects_lifetime)
+        #object = TrailObject(self.surface, pos, self.entity.radius, pygame.Color('white'), self.trail_objects_lifetime)
+        self.trail_objects.append(object)
+
+    def delete_trail_objects(self):
+        self.trail_objects = [object for object in self.trail_objects
+                              if not object.is_finished()]
+
+    def draw(self):
+        self.draw_trail_objects()
+
+    def draw_trail_objects(self):
+        for object in self.trail_objects:
+            object.draw()
+
+class TrailObject:
+    def __init__(self, surface, pos, radius, color,  duration):
+        self.surface = surface
+        self.pos = pos
+        self.radius = radius
+        self.duration = duration
+        self.timer = self.duration
+        self.shape = Circle(self.surface, self.pos, self.radius, True)
+        self.shape.border_width = 0
+        self.color = color
+        self.start_alpha = 0
+        self.end_alpha = 255
+
+    def update(self, dt):
+        self.timer -= dt
+        self.shape.update(dt)
+        self.shape.color = self.color
+
+    def draw(self):
+        self.shape.draw()
+
+    def is_finished(self):
+        return self.timer <= 0.0
+#####################################################
 
 ################## Animations
 
@@ -1555,6 +1624,7 @@ class Circle(Shape):
             #
             self.target_surf.blit(self.alpha_surf, self.alpha_surf.get_rect(center=self.pos))
         ###########################################
+
 class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
