@@ -54,7 +54,8 @@ __all__ = [
     'lerp',
     'lerp_smooth',
     'get_angle',
-    'TrailSystem'
+    'TrailSystem',
+    'ColorHelper'
 ]
 
 from inspect import isclass
@@ -140,7 +141,6 @@ def change_circles_direction_after_collision(circles: list):
     player.velocity.y = sin(get_collision_opposite_point_of_circles([player, player2])) * player.speed_after_collision # #   #
 
 def keep_circle_on_screen(circle_center: tuple,circle_radius, surface_width,surface_height):
-
         circle_x = circle_center[0]
         circle_y = circle_center[1]
 
@@ -1968,6 +1968,17 @@ def get_angle(target:pygame.Vector2, origin:pygame.Vector2):
     vector = pygame.Vector2(target.x - origin.x, target.y - origin.y)
     return math.atan2(vector.y, vector.x)
 
+class ColorHelper:
+    @staticmethod
+    def interpolate(start_color: pygame.Color, end_color: pygame.Color, progress: float) -> pygame.Color:
+        color = pygame.Color(
+            int(pygame.math.lerp(start_color.r, end_color.r, progress, True)),
+            int(pygame.math.lerp(start_color.g, end_color.g, progress, True)),
+            int(pygame.math.lerp(start_color.b, end_color.b, progress, True)),
+            int(pygame.math.lerp(start_color.a, end_color.a, progress, True))
+        ) # couleur d'initialisation
 
+
+        return color
 
 
