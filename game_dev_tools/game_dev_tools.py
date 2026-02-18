@@ -49,6 +49,7 @@ __all__ = [
     'TrailSystem',
     'ColorHelper',
     'ParticlesSystem',
+    'ParticlesSystemsFactory',
     'ParticlesSystemWithDuration',
     'Particle'
 ]
@@ -1526,24 +1527,44 @@ class ParticlesSystem:
         for particle in self.particles:
             particle.draw()
 
+#classe de création de systemes de particules avec durée
+# gére les évenements
+class ParticlesSystemsFactory:
+    def __init__(self, surface):
+        self.surface = surface
+        self.particles_systems = []
+
+    def handle_events(self, event):
+        pass
+
+    def update(self, dt):
+        self.particles_systems = [ps for ps in self.particles_systems if not ps.is_finished()]
+
+        for ps in self.particles_systems:
+            ps.update(dt)
+
+    def draw(self):
+        for ps in self.particles_systems:
+            ps.draw()
+
 # s'affiche et disparait aprés une durée déterminée
+# exemple : explosions
 class ParticlesSystemWithDuration(ParticlesSystem):
     def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, color:pygame.Color, particle_count:int, duration:float, particles_creation_interval:float):
         super().__init__(surface, pos, color, particle_count, particles_creation_interval)
         self.duration = duration
         self.timer = self.duration
 
-    def handle_events(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            self.create_particles()
-
     def update(self, dt):
-        print(self.timer)
         self.update_timer(dt)
         super().update(dt)
 
     def update_timer(self,dt):
+        print(self.timer)
         self.timer -= dt
+
+    def is_finished(self):
+        return self.timer <= 0.0
 
     def get_progress(self):
         return 1 - (self.timer / self.duration)
