@@ -34,14 +34,6 @@ __all__ = [
     "ImpactSystem",
     "StreakSystem",
     "GameEntityAppearance",
-    "PlayerAppearence",
-    "PlayerAppearence2",
-    "PlayerAppearance3",
-    "PlayerAppearance4",
-    "PlayerAppearance5",
-    "PlayerAppearance6",
-    "PlayerAppearance7",
-    "PlayerAppearance8",
     "GameEntityFactory",
     "EventAnimation",
     "EntityDefaultAppearance",
@@ -55,7 +47,10 @@ __all__ = [
     'lerp_smooth',
     'get_angle',
     'TrailSystem',
-    'ColorHelper'
+    'ColorHelper',
+    'ParticlesSystem',
+    'ParticlesSystemWithDuration',
+    'Particle'
 ]
 
 from inspect import isclass
@@ -1184,6 +1179,7 @@ class StreakSystem:   # ou trail?
         # créer un cercle pour chacune des dernieres pos
         for circle in self.circles:
             circle.draw()
+
 ##############################################
 # Dessin de traces d'objets avec systeme de particules
 class TrailSystem:
@@ -1218,8 +1214,7 @@ class TrailSystem:
         self.trail_objects.append(object)
 
     def delete_trail_objects(self):
-        self.trail_objects = [object for object in self.trail_objects
-                              if not object.is_finished()]
+        self.trail_objects = [object for object in self.trail_objects if not object.is_finished()]
 
     def draw(self):
         self.draw_trail_objects()
@@ -1377,199 +1372,6 @@ class GameEntityAppearance:
             game_entity.border_width
         )
 
-class PlayerAppearence(GameEntityAppearance):
-    def __init__(self, player):
-        super().__init__(player)
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        radius = game_entity.size
-        player_x = game_entity.pos[0]
-        player_y = game_entity.pos[1]
-        surface = game_entity.target_surf
-        color = game_entity.color
-
-        step = radius / 4
-        start = player_y - radius
-        stop = player_y
-
-        i = 1
-        for y in float_range(player_y - radius, stop, step):
-            Ellipse().draw(surface, color, (player_x, y), (radius*i, 10), 1)
-            i+=1
-
-class PlayerAppearence2(GameEntityAppearance):
-    def __init__(self, shapes:list, player):
-        super().__init__(shapes, player)
-        self.player=player
-
-    def draw(self):
-        self.draw_game_entity_primary_shape()
-        # rect = Rectangle()
-        # time = pygame.time.get_ticks()/1000
-        # rect.draw(self.player.target_surf,self.player.color,self.player.pos,self.player.size,self.player.border_width)
-        # angle_i = 10
-        # rep = 360/angle_i
-        # i=0
-        # color_in_range = 255//rep
-        # for angle in range(0,360, angle_i):
-        #     x = self.player.pos[0]+ (math.tan(time)) * math.cos(time+math.radians(angle))
-        #     y = self.player.pos[1] + (math.tan(time)) * math.sin(time+math.radians(angle))
-        #     orbital_rect = Rectangle()
-        #     orbital_rect.draw(self.player.target_surf, ((255-i),0,0), (x,y),self.player.size, 1)
-        #     i+=1
-        #     print(i)
-
-class PlayerAppearance3(GameEntityAppearance):
-    def __init__(self, shapes:list, player):
-        super().__init__(shapes, player)
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        self.draw_object_around_radius(
-            game_entity.target_surf,
-            game_entity.pos,
-            game_entity.color,
-            90,
-            100,
-            30,
-            Circle()
-        )
-        # angle_increment = 45
-        # for angle in range(0,360,angle_increment):
-        #     x = game_entity.pos.x + game_entity.size * (cos(radians(angle)))
-        #     y = game_entity.pos.y + game_entity.size * (sin(radians(angle)))
-        #     Circle().draw(game_entity.target_surf,game_entity.color,(x,y), game_entity.size)
-
-    def draw_object_around_radius(self,surface,pos,color,angle_increment,radius, radius2,shape):
-        for angle in range(0,360,angle_increment):
-            x = pos.x + radius * (cos(radians(angle)))
-            y = pos.y + radius * (sin(radians(angle)))
-            shape.draw(surface, color, (x,y), radius2)
-
-class PlayerAppearance4(GameEntityAppearance):
-    def __init__(self, shapes: list, player):
-        super().__init__(shapes, player)
-        self.player = player
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        time  = pygame.time.get_ticks()/1000
-
-        angle_i = 10
-        for angle in range(0,360,angle_i):
-            x = game_entity.pos[0] + game_entity.size * cos(radians(angle))
-            y = game_entity.pos[1] + game_entity.size * sin(time+radians(angle))
-            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),5 )
-            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),20, 1 )
-
-        for angle in range(0, 360, angle_i):
-            x = game_entity.pos[0] + game_entity.size * sin(radians(angle))
-            y = game_entity.pos[1] + game_entity.size * cos(time + radians(angle))
-            Circle().draw(game_entity.target_surf,game_entity.color,(x,y),20, 1 )
-            Circle().draw(game_entity.target_surf, game_entity.color, (x, y), 5, )
-
-class PlayerAppearance5(GameEntityAppearance):
-    def __init__(self, shapes: list, player):
-        super().__init__(shapes, player)
-        self.player = player
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        radius = game_entity.size
-        player_x = game_entity.pos[0]
-        player_y = game_entity.pos[1]
-        surface = game_entity.target_surf
-        color = game_entity.color
-
-
-        step = radius / 10
-        start = player_y-radius
-        stop = player_y+radius+step
-
-        for y in float_range(player_y-radius,stop, step):
-            Ellipse().draw(surface,color,(player_x,y),(y,10+y),1)
-
-class PlayerAppearance6(GameEntityAppearance):
-    def __init__(self, shapes: list, player):
-        super().__init__(shapes, player)
-        self.player = player
-        self.angle = 0
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        radius = game_entity.size
-        player_x = game_entity.pos[0]
-        player_y = game_entity.pos[1]
-        surface = game_entity.target_surf
-        color = game_entity.color
-
-        time = pygame.time.get_ticks()/1000
-        dt = pygame.Clock().tick(60)/1000
-        #centre
-
-        game_text  = GameText(surface, 20)
-        game_text.blit_text(str(dt),(5,5))
-
-        start_pos = game_entity.pos
-        initial_direction = pygame.Vector2(1,0) #
-
-        angle_i = 30
-
-        for angle in range(0, 360, angle_i):
-            direction = initial_direction.rotate(-(time*100)+angle)
-            end_pos = start_pos + direction * radius
-            Line().draw(surface,color, start_pos, end_pos)
-
-class PlayerAppearance7(GameEntityAppearance):
-    def __init__(self, shapes: list, player):
-        super().__init__(shapes, player)
-        self.player = player
-        self.angle = 0
-
-    def draw(self):
-        game_entity = self.game_entity
-        self.draw_game_entity_primary_shape()
-        radius = game_entity.size
-        player_x = game_entity.pos[0]
-        player_y = game_entity.pos[1]
-        surface = game_entity.target_surf
-        color = game_entity.color
-
-        time = pygame.time.get_ticks()/1000
-        angle = time
-        start_pos = game_entity.pos
-        direction = pygame.Vector2(cos(angle), sin(angle))  #
-        end_pos = start_pos + direction * radius
-        angle_i = 30
-
-        for angle in range(0,360,angle_i):
-            start_pos = game_entity.pos
-            direction = pygame.Vector2(cos(radians(angle)), sin(radians(angle)))  #
-            end_pos = start_pos + direction * radius
-            Line().draw(surface, color, start_pos, end_pos)
-
-class PlayerAppearance8(GameEntityAppearance):
-
-    def __init__(self, shapes:list, player):
-        super().__init__(shapes)
-        self.player = player
-
-    def draw(self):
-        player = self.player
-        surface = player.target_surf
-        color = player.color
-
-        radius = player.radius
-        pos =  player.pos
-
-        Circle(surface, pos, radius).draw()
-
 class Shape:
     __slots__ = ['pos', 'color', 'border_width', 'target_surf']
     def __init__(self, target_surf:pygame.Surface, pos:pygame.Vector2):
@@ -1625,6 +1427,16 @@ class Circle(Shape):
             self.target_surf.blit(self.alpha_surf, self.alpha_surf.get_rect(center=self.pos))
         ###########################################
 
+class CircleWithGradient:
+    def __init__(self):
+        pass
+
+    def update(self, dt):
+        pass
+
+    def draw(self):
+        pass
+
 class Rectangle(Shape):
     def __init__(self, target_surf, pos):
         super().__init__(target_surf, pos)
@@ -1670,6 +1482,107 @@ class Line(Shape):
     def draw(self):
         #start_pos = self.pos
         pygame.draw.line(self.target_surf, self.color, self.start_pos, self.end_pos, self.border_width)
+
+# s'affiche et reste à l'écran
+class ParticlesSystem:
+    def __init__(self, surface: pygame.Surface, pos: pygame.Vector2, color: pygame.Color, particle_count: int, particles_creation_interval):
+        self.surface = surface
+        self.pos = pos
+        self.color = color
+        self.particle_count = particle_count
+
+        self.particles = []
+
+        self.particles_creation_interval = particles_creation_interval
+        self.particles_creation_timer = self.particles_creation_interval
+
+    def handle_events(self, event):
+        pass
+
+    def update(self, dt):
+        self.particles_creation_timer -= dt
+
+        if self.particles_creation_timer <= 0.0:
+            self.create_particles()
+            self.particles_creation_timer = self.particles_creation_interval
+
+        self.remove_dead_particles()
+        self.update_particles(dt)
+
+    def create_particles(self):
+        print(f'creation de particules toutes les {self.particles_creation_interval} secondes')
+
+    def update_particles(self, dt):
+        for particle in self.particles:
+            particle.update(dt)
+
+    def remove_dead_particles(self):
+        self.particles = [p for p in self.particles if not p.is_finished()]
+
+    def draw(self):
+        self.draw_particles()
+
+    def draw_particles(self):
+        for particle in self.particles:
+            particle.draw()
+
+# s'affiche et disparait aprés une durée déterminée
+class ParticlesSystemWithDuration(ParticlesSystem):
+    def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, color:pygame.Color, particle_count:int, duration:float, particles_creation_interval:float):
+        super().__init__(surface, pos, color, particle_count, particles_creation_interval)
+        self.duration = duration
+        self.timer = self.duration
+
+    def handle_events(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.create_particles()
+
+    def update(self, dt):
+        print(self.timer)
+        self.update_timer(dt)
+        super().update(dt)
+
+    def update_timer(self,dt):
+        self.timer -= dt
+
+    def get_progress(self):
+        return 1 - (self.timer / self.duration)
+
+class Particle:
+    def __init__(self, particles_system:ParticlesSystem, shape:Circle, pos, color, radius, duration, direction, speed, end_color):
+        self.particles_system = particles_system
+        self.shape = shape # à tester
+        self.surface = self.particles_system.surface
+        self.pos = pos
+        self.start_color = color
+        self.end_color = end_color
+        self.color = color
+        self.radius = radius
+        self.duration = duration
+        self.timer = duration
+        self.speed = speed
+        self.direction = direction
+
+    def update(self, dt):
+        self.update_timer(dt)
+        self.update_shape(dt)
+
+    def draw(self):
+        self.shape.draw()
+
+    def update_shape(self, dt):
+        self.shape.pos = self.pos
+        self.shape.color = self.color
+        self.shape.radius = self.radius
+
+    def update_timer(self, dt):
+        self.timer -= dt
+
+    def is_finished(self):
+        return self.timer <= 0.0
+
+    def get_progress(self):
+        return 1 - (self.timer / self.duration)
 
 import math
 from typing import Callable

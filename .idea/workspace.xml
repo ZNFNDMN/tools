@@ -91,7 +91,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/game_dev_tools/game_dev_tools.py</url>
-          <line>155</line>
+          <line>150</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
