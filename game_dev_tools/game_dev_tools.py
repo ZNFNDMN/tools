@@ -51,7 +51,16 @@ __all__ = [
     'ParticlesSystem',
     'ParticlesSystemsFactory',
     'ParticlesSystemWithDuration',
-    'Particle'
+    'Particle',
+    'Particle1',
+    'update_particle',
+    'ParticlesSystem1',
+    'update_particles1',
+    'draw_particles1',
+    'PSFactory',
+    'handle_ps_factory_events',
+    'update_particles_systems',
+    'draw_particles_systems'
 ]
 
 from inspect import isclass
@@ -61,6 +70,9 @@ from pygame import *
 import pygame.freetype
 import copy
 import os
+from dataclasses import dataclass
+import random
+
 
 # Vérifie si 2 cercles se touchent
 def circles_collide(circles: list):
@@ -1560,7 +1572,6 @@ class ParticlesSystemWithDuration(ParticlesSystem):
         super().update(dt)
 
     def update_timer(self,dt):
-        print(self.timer)
         self.timer -= dt
 
     def is_finished(self):
@@ -1912,7 +1923,162 @@ class ColorHelper:
             int(pygame.math.lerp(start_color.a, end_color.a, progress, True))
         ) # couleur d'initialisation
 
-
         return color
 
+@dataclass
+class ParticlesSystem1: # systeme de création de particules par intervales
+    __slots__ = ['surface', 'pos', 'timer', 'particles_creation_interval', 'particles']
+
+    surface: pygame.Surface
+    pos: pygame.Vector2
+    particles_creation_interval: float
+
+    def __post_init__(self):
+        self.timer = self.particles_creation_interval
+        self.particles = []# system@dataclass
+
+@dataclass
+class PSFactory: # Pour créer des systemes de particules
+    surface: pygame.Surface
+
+    def __post_init__(self):
+        self.particles_systems = []
+
+def handle_ps_factory_events(ps_factory, event):
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        create_particles_system(ps_factory, pygame.Vector2(event.pos))
+        print(len(ps_factory.particles_systems))
+
+def create_particles_system(ps_factory, event_pos):
+    ps = ParticlesSystem2(
+        ps_factory.surface, event_pos, 5.0
+    )
+
+    ps_factory.particles_systems.append(ps)
+
+def update_particles_systems(ps_factory, dt):
+    for ps in ps_factory.particles_systems:
+        update_particles1(ps, dt)
+
+    remove_finished_particules_systems(ps_factory)
+
+def draw_particles_systems(ps_factory):
+    for ps in ps_factory.particles_systems:
+        draw_particles1(ps)
+
+
+def remove_finished_particules_systems(ps_factory):
+    ps_factory.particles_systems = [ps for ps in ps_factory.particles_systems if ps is not ps_is_finished(ps)]
+
+# doit être utilisé avec une factory
+class ParticlesSystem2: # systeme de création de particules avec durée
+    __slots__ = ['surface', 'pos', 'timer', 'duration', 'particles']
+
+    surface: pygame.Surface
+    pos: pygame.Vector2
+    duration: float
+
+    def __post_init__(self):
+        self.timer = self.duration
+        self.particles = []
+
+def create_particles1(ps):
+    for _ in range(1):
+        start_color = pygame.Color('white')
+        end_color = pygame.Color('white')
+        pos = ps.pos.copy()
+        angle = random.uniform(0.0, 2 * math.pi)
+        direction = pygame.Vector2(
+            math.cos(angle),
+            math.sin(angle)
+        )
+
+        p = Particle1(ps.surface, pos, start_color, end_color,6.5, 1, 1, 120, direction )
+
+        ps.particles.append(p)
+
+def update_particles1(ps, dt: float):
+
+    for p in ps.particles:
+        update_particle(p, dt)
+        p.pos += p.direction * p.speed * dt
+        p.direction = p.direction.rotate(1)
+
+        progress = get_particule_progress(p)
+        p.shape.color.a = int(pygame.math.lerp(0, 255 , progress, True))
+        p.shape.color = ColorHelper.interpolate(p.start_color, p.end_color, progress)
+
+    if ps.timer <= 0.0:
+        create_particles1(ps)
+        ps.timer = ps.particles_creation_interval
+
+    remove_finished_particles(ps)
+
+    update_ps_timer(ps, dt)
+
+def update_ps_timer(ps, dt):
+    ps.timer -= dt
+
+def draw_particles1(ps):
+    for p in ps.particles:
+        draw_particle(p)
+
+def remove_finished_particles(ps):
+    ps.particles = [p for p in ps.particles if not particle_is_finished(p)]
+
+def handle_events(ps, event):
+    if event.type == pygame.MOUSEBUTTONDOWN:
+        print('clic')
+
+def get_ps_progress(ps):
+    return 1 - (ps.timer / ps.duration)
+
+def ps_is_finished(ps):
+    return ps.timer <= 0.0
+
+########################################################
+########################################################
+########################################################
+
+@dataclass
+class Particle1:
+    __slots__ = [
+        'surface','pos','start_color','end_color','duration','shape',
+        'start_radius','end_radius','timer','speed','direction'
+    ]
+
+    surface: pygame.Surface
+    pos: pygame.Vector2
+    start_color: pygame.Color
+    end_color: pygame.Color
+    duration: float
+    start_radius: float
+    end_radius: float
+    speed: float
+    direction: pygame.Vector2
+
+    def __post_init__(self):
+        self.timer = self.duration
+        self.shape = Circle(self.surface, self.pos, 1, True)
+        # solution temporaire
+        self.shape.color.a = 0 # faire disparaitre le cercle qui apparait a chaque création
+
+###################################################################
+# fonctions pour ParticlesV2
+# à regrouper dans un module
+###################################################################
+def update_particle(p: Particle1, dt: float):
+    p.shape.pos = p.pos # copie ou pas
+    p.shape.color = p.start_color
+    p.shape.radius = p.start_radius
+    p.timer -= dt
+
+def draw_particle(p: Particle1):
+    p.shape.draw()
+
+def get_particule_progress(p: Particle1):
+    return 1 - (p.timer / p.duration)
+
+def particle_is_finished(p: Particle1):
+    return p.timer <= 0.0
 
