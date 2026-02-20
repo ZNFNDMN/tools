@@ -1496,6 +1496,252 @@ class Line(Shape):
         #start_pos = self.pos
         pygame.draw.line(self.target_surf, self.color, self.start_pos, self.end_pos, self.border_width)
 
+class Pixel:
+    def __init__(self, surface, pos, color):
+        self.surface = surface
+        self.pos = pos
+        self.color = color
+
+    def update(self, dt):
+        pass
+
+    def draw(self):
+        self.surface.set_at(self.pos, self.color)
+
+class PlanetWithNoise:
+    def __init__(self, surface, pos, radius, gradient_start_color, gradient_end_color, gradient_exponent):
+        self.surface = surface
+        self.surf_height = self.surface.get_rect().height
+        self.pos = pos
+        self.radius = radius
+        self.gradient_start_color = gradient_start_color
+        self.gradient_end_color = gradient_end_color
+        self.gradient_exponent = gradient_exponent
+
+        self.concentric_circles = []
+        self.init_concentric_circles()
+
+        noise_seed = random.randint(0, 1000000)
+        self.noise = NoiseV2(self.surface, self.pos, self.radius, noise_seed)
+        self.noise.start_color = self.gradient_start_color
+        self.noise.end_color = self.gradient_end_color
+        self.noise.edge_color = self.gradient_end_color
+
+        self.noise.spacing = 3
+        self.noise.scale = 0.009
+        self.noise.reinit_noise_values()
+
+    def init_concentric_circles(self):
+        for i in range(self.radius):
+            progress = (i / self.radius) ** self.gradient_exponent
+
+            c = Circle(self.surface, self.pos, i)
+            c.border_width = 0
+            c.color.r = int(lerp(self.gradient_start_color.r, self.gradient_end_color.r, progress))
+            c.color.g = int(lerp(self.gradient_start_color.g, self.gradient_end_color.g, progress))
+            c.color.b = int(lerp(self.gradient_start_color.b, self.gradient_end_color.b, progress))
+
+            self.concentric_circles.append(c)
+
+    def update_concentric_circles(self):
+        for c in self.concentric_circles:
+            c.pos = self.pos
+
+    def update(self, dt):
+        self.update_concentric_circles()
+        self.noise.update(dt)
+
+    def draw(self):
+        self.draw_gradient()
+        self.noise.draw()
+
+    def draw_gradient(self):
+        for c in self.concentric_circles:
+            i = self.concentric_circles.index(c)
+            circle = self.concentric_circles[-i]
+            circle.draw()
+
+    def is_out_of_screen(self):
+        return self.pos.y >= self.surf_height
+
+class Noise:
+    def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, radius, seed:int):
+        self.surface = surface
+        self.pos = pos
+        self.radius = radius
+        self.seed = seed
+        self.noise = opensimplex.OpenSimplex(self.seed)
+
+        self.scale = 0.15
+        self.scale = 0.001
+        self.scale = 0.019
+        self.offset_x = 0
+        self.offset_y = 0
+        self.speed = 100
+        self.spacing = 3
+        # Calculs avant la boucle
+        self.start_x = int(self.pos.x - self.radius)
+        self.end_x = int(self.pos.x + self.radius)
+        self.start_y = int(self.pos.y - self.radius)
+        self.end_y = int(self.pos.y + self.radius)
+
+        self.positions = []
+
+    def move(self, dt):
+        self.offset_x -= self.speed * dt
+        self.offset_y += self.speed * dt
+
+    def update(self, dt):
+        self.move(dt)
+
+    def draw(self):
+        for x in range(self.start_x, self.end_x, self.spacing):
+            for y in range(self.start_y, self.end_y, self.spacing):
+                # obtenir la valeur du bruit
+                noise_val = self.noise.noise2(
+                    (x + self.offset_x) * self.scale,
+                    (y + self.offset_y) * self.scale
+                )
+
+                # Convertir en niveau de gris
+                gray = int((noise_val + 1) * 127.5)
+
+                # dessiner les pixels
+                pos = pygame.Vector2(x, y)
+                distance = pos.distance_to(self.pos)
+
+                if distance <= self.radius and noise_val <= -0.1:
+                    progress = 1 - (distance / self.radius) ** 10
+                    gray = int(lerp(0, gray, progress))
+                    self.surface.set_at((x, y), (gray, gray, gray))
+                    # dessiner un cercle de rayon 1
+                    # pygame.draw.circle(self.surf0, (gray, 0, 0), (x, y), 1)
+
+class NoiseV2:
+    def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, radius, seed:int):
+        self.surface = surface
+        self.pos = pos
+        self.radius = radius
+        self.seed = seed
+        self.noise = opensimplex.OpenSimplex(self.seed)
+        self.scale = 0.05
+        self.scale = random.uniform(0.09, 0.9)
+        self.offset_x = 0
+        self.offset_y = 0
+        self.speed = random.randint(10, 60)
+        self.spacing = random.randint(3, 5)
+        # Calculs avant la boucle
+        self.start_x = int(self.pos.x - self.radius)
+        self.end_x = int(self.pos.x + self.radius)
+        self.start_y = int(self.pos.y - self.radius)
+        self.end_y = int(self.pos.y + self.radius)
+
+        self.noise_values = []
+
+        for x in range(self.start_x, self.end_x, self.spacing):
+            for y in range(self.start_y, self.end_y, self.spacing):
+                # obtenir la valeur du bruit
+                value = self.noise.noise2(
+                    (x + self.offset_x) * self.scale,
+                    (y + self.offset_y) * self.scale
+                )
+
+                noise_value = NoiseValue(self,value)
+                noise_value.x = x
+                noise_value.y = y
+                noise_value.offset_x = 0
+                noise_value.offset_y = 0
+
+                self.noise_values.append(noise_value)
+
+        self.start_color = pygame.Color('black')
+        self.end_color = pygame.Color('cyan')
+        self.edge_color = pygame.Color('cyan')
+
+        angle = random.uniform(0.0, 2 * math.pi)
+        self.direction = pygame.Vector2(math.cos(angle), math.sin(angle))
+
+    # Réinitialiser la liste en cas de modification d'un attribut
+    def reinit_noise_values(self):
+        self.noise_values = []
+        for x in range(self.start_x, self.end_x, self.spacing):
+            for y in range(self.start_y, self.end_y, self.spacing):
+                value = self.noise.noise2(
+                    (x + self.offset_x) * self.scale,
+                    (y + self.offset_y) * self.scale
+                )
+
+                noise_value = NoiseValue(self, value)
+                noise_value.x = x
+                noise_value.y = y
+                noise_value.offset_x = 0
+                noise_value.offset_y = 0
+
+                self.noise_values.append(noise_value)
+
+    def move(self, dt):
+        for noise_value in self.noise_values:
+            pass
+            # noise_value.offset_x += self.direction.x * self.speed * dt
+            # noise_value.offset_y += self.direction.y * self.speed * dt
+
+    def update(self, dt):
+        self.move(dt)
+
+        for noise_value in self.noise_values:
+
+            # actualiser la valeur du bruit
+            noise_value.noise_value = self.noise.noise2(
+                 (noise_value.x + noise_value.offset_x) * self.scale,
+                 (noise_value.y + noise_value.offset_y) * self.scale
+            )
+
+    def draw(self):
+        for noise_value in self.noise_values:
+            pos = pygame.Vector2(noise_value.x, noise_value.y)
+            distance = pos.distance_to(self.pos)
+
+            if distance <= self.radius:
+
+                # valeur du bruit entre 1 et 2
+                progress = 1 - (noise_value.noise_value + 1)  / 2
+
+                # dessiner un cercle de rayon 1
+                # pygame.draw.circle(self.surf0, (gray, 0, 0), (x, y), 1)
+                noise_value.color_r = int(lerp(self.start_color.r, self.end_color.r, progress))
+                noise_value.color_g = int(lerp(self.start_color.g, self.end_color.g, progress))
+                noise_value.color_b = int(lerp(self.start_color.b, self.end_color.b, progress))
+
+                progress = (distance / self.radius) ** 12
+                #
+                noise_value.color_r = int(lerp(noise_value.color_r, self.edge_color.r, progress))
+                noise_value.color_g = int(lerp(noise_value.color_g, self.edge_color.g, progress))
+                noise_value.color_b = int(lerp(noise_value.color_b, self.edge_color.b, progress))
+
+                noise_value.draw()
+
+class NoiseValue:
+    def __init__(self, noise, initial_noise_value):
+        self.noise = noise
+        self.surface = self.noise.surface
+        self.noise_value = initial_noise_value
+        self.x = None
+        self.y = None
+        self.scale = None
+        self.pos = None
+        self.color_r = None
+        self.color_g = None
+        self.color_b = None
+        self.offset_x = None
+        self.offset_y = None
+
+    def update(self, dt):
+        pass
+
+    def draw(self):
+        self.surface.set_at((self.x, self.y), (self.color_r, self.color_g, self.color_b))
+
+
 # s'affiche et reste à l'écran
 class ParticlesSystem:
     def __init__(self, surface: pygame.Surface, pos: pygame.Vector2, color: pygame.Color, particle_count: int, particles_creation_interval):
