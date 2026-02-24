@@ -23,7 +23,7 @@ __all__ = [
     #"Rectangle",
     "Polygon",
     "Ellipse",
-    "Line",
+    #"Line",
     "MovementSystem",
     "MouseMovementSystem",
     "DragAndDrop",
