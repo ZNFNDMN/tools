@@ -21,7 +21,7 @@ __all__ = [
     "Shape",
     #"Circle",
     #"Rectangle",
-    "Polygon",
+    #"Polygon",
     "Ellipse",
     #"Line",
     "MovementSystem",
