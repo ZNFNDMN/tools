@@ -1279,11 +1279,12 @@ class Shape:
 class Circle(Shape):
     #__slots__ = ['radius', 'rect']
 
-    def __init__(self, target_surf, pos, radius, alpha=False):
+    def __init__(self, target_surf, pos, radius, border_width=0, alpha=False):
         super().__init__(target_surf, pos)
         # 2 attributs nécessaires pour pouvoir gérer les collisions avec pygame.sprite.circle_collide
         self.radius =  radius
         self.rect = None
+        self.border_width = border_width
         self.alpha = alpha
 
         # gestion transparence
@@ -1624,7 +1625,6 @@ class NoiseValue:
     def draw(self):
         self.surface.set_at((self.x, self.y), (self.color_r, self.color_g, self.color_b))
 
-
 # s'affiche et reste à l'écran
 class ParticlesSystem:
     def __init__(self, surface: pygame.Surface, pos: pygame.Vector2, color: pygame.Color, particle_count: int, particles_creation_interval):
@@ -1674,9 +1674,6 @@ class ParticlesSystemsFactory:
     def __init__(self, surface):
         self.surface = surface
         self.particles_systems = []
-
-    def handle_events(self, event):
-        pass
 
     def update(self, dt):
         self.particles_systems = [ps for ps in self.particles_systems if not ps.is_finished()]
