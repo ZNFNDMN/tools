@@ -1627,6 +1627,8 @@ class NoiseValue:
 
 # s'affiche et reste à l'écran
 class ParticlesSystem:
+    particles_systems = []
+
     def __init__(self, surface: pygame.Surface, pos: pygame.Vector2, color: pygame.Color, particle_count: int, particles_creation_interval):
         self.surface = surface
         self.pos = pos
@@ -1638,8 +1640,19 @@ class ParticlesSystem:
         self.particles_creation_interval = particles_creation_interval
         self.particles_creation_timer = self.particles_creation_interval
 
-    def handle_events(self, event):
-        pass
+        ParticlesSystem.particles_systems.append(self)
+
+    @classmethod
+    def update_instances(cls, dt: float):
+        for ps in cls.particles_systems:
+            ps.update(dt)
+
+        cls.particles_systems = [ps for ps in cls.particles_systems if not ps.is_finished()]
+
+    @classmethod
+    def draw_instances(cls):
+        for ps in cls.particles_systems:
+            ps.draw()
 
     def update(self, dt):
         self.particles_creation_timer -= dt
