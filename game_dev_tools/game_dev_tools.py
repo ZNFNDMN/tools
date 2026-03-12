@@ -1640,24 +1640,9 @@ class ParticlesSystem:
         self.particles_creation_interval = particles_creation_interval
         self.particles_creation_timer = self.particles_creation_interval
 
-        ParticlesSystem.particles_systems.append(self)
-
-    @classmethod
-    def update_instances(cls, dt: float):
-        for ps in cls.particles_systems:
-            ps.update(dt)
-
-        cls.particles_systems = [ps for ps in cls.particles_systems if not ps.is_finished()]
-
-    @classmethod
-    def draw_instances(cls):
-        for ps in cls.particles_systems:
-            ps.draw()
-
     def update(self, dt):
         self.particles_creation_timer -= dt
-
-        if self.particles_creation_timer <= 0.0:
+        if self.particles_creation_timer <= self.particles_creation_interval:
             self.create_particles()
             self.particles_creation_timer = self.particles_creation_interval
 
@@ -1700,18 +1685,63 @@ class ParticlesSystemsFactory:
 
 # s'affiche et disparait aprés une durée déterminée
 # exemple : explosions
-class ParticlesSystemWithDuration(ParticlesSystem):
-    def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, color:pygame.Color, particle_count:int, duration:float, particles_creation_interval:float):
-        super().__init__(surface, pos, color, particle_count, particles_creation_interval)
+class ParticlesSystemWithDuration:
+    instances = []
+    def __init__(self, surface:pygame.Surface, pos:pygame.Vector2, color:pygame.Color, particle_count:int, duration:float):
+        self.surface = surface
+        self.pos = pos
+        self.color = color
+        self.particle_count = particle_count
         self.duration = duration
         self.timer = self.duration
 
-    def update(self, dt):
-        self.update_timer(dt)
-        super().update(dt)
+        self.particles = []
 
-    def update_timer(self,dt):
+        ParticlesSystemWithDuration.instances.append(self)
+
+        for _ in range(self.particle_count):
+            circle = Circle(self.surface, pygame.Vector2(0,0), 0, 0, True)
+            angle = random.uniform(0.0, pi * 2)
+            direction = pygame.Vector2(cos(angle),sin(angle)).normalize()
+            speed = random.randint(10, 60)
+            duration = random.uniform(0.5,1.0)
+            p = Particle(self.surface, circle, self.pos.copy(), pygame.Color('white'), 1, duration, direction, speed,pygame.Color('white') )
+            self.particles.append(p)
+
+    @classmethod
+    def update_instances(cls, dt: float):
+        for ps in cls.instances:
+            ps.update(dt)
+
+        cls.instances = [ps for ps in cls.instances if not ps.is_finished()]
+
+    @classmethod
+    def draw_instances(cls):
+        for ps in cls.instances:
+            ps.draw()
+
+    def update(self, dt):
         self.timer -= dt
+        self.update_particles(dt)
+        self.remove_dead_particles()
+
+    def update_particles(self, dt):
+        for p in self.particles:
+            p.update(dt)
+            p.pos += p.direction * p.speed * dt
+
+            progress = p.get_progress()
+            p.color.a = int(pygame.math.lerp(255,0, progress))
+
+    def remove_dead_particles(self):
+        self.particles = [p for p in self.particles if not p.is_finished()]
+
+    def draw(self):
+        self.draw_particles()
+
+    def draw_particles(self):
+        for particle in self.particles:
+            particle.draw()
 
     def is_finished(self):
         return self.timer <= 0.0
@@ -1719,11 +1749,11 @@ class ParticlesSystemWithDuration(ParticlesSystem):
     def get_progress(self):
         return 1 - (self.timer / self.duration)
 
+
 class Particle:
-    def __init__(self, particles_system:ParticlesSystem, shape:Circle, pos, color, radius, duration, direction, speed, end_color):
-        self.particles_system = particles_system
+    def __init__(self, surface, shape:Circle, pos, color, radius, duration, direction, speed, end_color):
+        self.surface = surface
         self.shape = shape # à tester
-        self.surface = self.particles_system.surface
         self.pos = pos
         self.start_color = color
         self.end_color = end_color
@@ -1742,6 +1772,8 @@ class Particle:
         self.shape.draw()
 
     def update_shape(self, dt):
+        if self.shape.alpha:
+            self.shape.update(dt)
         self.shape.pos = self.pos
         self.shape.color = self.color
         self.shape.radius = self.radius
