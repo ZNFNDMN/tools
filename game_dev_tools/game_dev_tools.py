@@ -1347,19 +1347,12 @@ class Rectangle(Shape):
         pygame.draw.rect(self.target_surf, self.color, self.rect, self.border_width)
 
 class Polygon(Shape):
-    def __init__(self, target_surf, pos):
+    def __init__(self, target_surf, pos, points):
         super().__init__(target_surf, pos)
+        self.points = points
 
-    def draw(self, radius:int, angle_increment):
-        # transmettre les angles correspondant aux points
-
-        points = []
-        for angle in range(0,360, angle_increment):
-            x = self.pos.x + radius * cos(radians(angle))
-            y = self.pos.y + radius * sin(radians(angle))
-            points.append((x,y))
-
-        pygame.draw.polygon(self.target_surf, self.color, points, self.border_width)
+    def draw(self):
+        pygame.draw.polygon(self.target_surf, self.color, self.points, self.border_width)
 
 class Ellipse(Shape):
     def __init__(self, target_surf, pos):
