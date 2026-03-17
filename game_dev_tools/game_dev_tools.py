@@ -1293,7 +1293,7 @@ class Circle(Shape):
             self.alpha_surf_width = self.alpha_surf.get_rect().width
             self.alpha_surf_height = self.alpha_surf.get_rect().height
 
-    def update(self, dt):
+    def update(self):
         # mise à jour de la surface alpha
         if self.alpha and self.radius > 0:
             self.alpha_surf = pygame.Surface((self.radius * 4, self.radius * 4), pygame.SRCALPHA)
